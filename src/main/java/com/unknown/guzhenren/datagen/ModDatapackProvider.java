@@ -88,6 +88,11 @@ public class ModDatapackProvider extends DatapackBuiltinEntriesProvider {
     private static final int BEETLE_RANK_FIVE_SPAWN_WEIGHT = 1;
     private static final int BEETLE_PACK_MINIMUM = 1;
     private static final int BEETLE_PACK_MAXIMUM = 1;
+    private static final ResourceKey<BiomeModifier> SPAWN_WILD_BOAR = ResourceKey.create(
+            NeoForgeRegistries.Keys.BIOME_MODIFIERS, Guzhenren.id("spawn_wild_boar"));
+    private static final int WILD_BOAR_SPAWN_WEIGHT = 8;
+    private static final int WILD_BOAR_PACK_MINIMUM = 1;
+    private static final int WILD_BOAR_PACK_MAXIMUM = 3;
     private static void biomeModifiers(BootstrapContext<BiomeModifier> context) {
         HolderGetter<Biome> biomes = context.lookup(Registries.BIOME);
 
@@ -104,6 +109,10 @@ public class ModDatapackProvider extends DatapackBuiltinEntriesProvider {
                         beetleSpawns(ModEntityTypes.VERTICAL_CRASH_GU_ENTITY.get(), BEETLE_SPAWN_WEIGHT),
                         beetleSpawns(ModEntityTypes.CHARGING_CRASH_GU_4_ENTITY.get(), BEETLE_RANK_FOUR_SPAWN_WEIGHT),
                         beetleSpawns(ModEntityTypes.CHARGING_CRASH_GU_5_ENTITY.get(), BEETLE_RANK_FIVE_SPAWN_WEIGHT))));
+        context.register(SPAWN_WILD_BOAR, new BiomeModifiers.AddSpawnsBiomeModifier(
+                biomes.getOrThrow(ModBiomeTags.WILD_BOAR_SPAWNS), List.of(new MobSpawnSettings.SpawnerData(
+                        ModEntityTypes.WILD_BOAR.get(), WILD_BOAR_SPAWN_WEIGHT,
+                        WILD_BOAR_PACK_MINIMUM, WILD_BOAR_PACK_MAXIMUM))));
     }
     private static MobSpawnSettings.SpawnerData beetleSpawns(EntityType<RhinocerosBeetleGuEntity> type,
                                                              int weight) {

@@ -16,10 +16,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Writes the biome tags deciding where wild Gu [野生蛊虫] may spawn.
+ * Writes the biome tags deciding where wild Gu [野生蛊虫] and the wild boar [野猪] may spawn.
  *
  * <p>Extends {@link net.minecraft.data.tags.TagsProvider} for {@link net.minecraft.world.level.biome.Biome}.
- * Populates the hope, boar and rhinoceros beetle Gu tags from one shared list of 39 land biomes.
+ * Populates the hope, boar and rhinoceros beetle Gu tags from one shared list of 39 land biomes, and the wild
+ * boar tag from the five forest biomes where it naturally occurs.
  * Must NOT collapse to {@code #minecraft:is_overworld} because that carries the
  * oceans, whose surface sits at sea level.
  *
@@ -30,6 +31,12 @@ import org.jetbrains.annotations.Nullable;
 
 public class ModBiomeTagsProvider extends TagsProvider<Biome> {
 
+    private static final List<ResourceKey<Biome>> WILD_BOAR_BIOMES = List.of(
+            Biomes.FOREST,
+            Biomes.FLOWER_FOREST,
+            Biomes.BIRCH_FOREST,
+            Biomes.OLD_GROWTH_BIRCH_FOREST,
+            Biomes.DARK_FOREST);
     private static final List<ResourceKey<Biome>> LAND_SPAWN_BIOMES = List.of(
             Biomes.PLAINS,
             Biomes.SUNFLOWER_PLAINS,
@@ -90,6 +97,9 @@ public class ModBiomeTagsProvider extends TagsProvider<Biome> {
             tag(ModBiomeTags.HOPE_GU_SPAWNS).add(biome);
             tag(ModBiomeTags.BOAR_GU_SPAWNS).add(biome);
             tag(ModBiomeTags.RHINOCEROS_BEETLE_GU_SPAWNS).add(biome);
+        }
+        for (ResourceKey<Biome> biome : WILD_BOAR_BIOMES) {
+            tag(ModBiomeTags.WILD_BOAR_SPAWNS).add(biome);
         }
     }
 }

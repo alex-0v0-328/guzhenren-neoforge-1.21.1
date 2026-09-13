@@ -35,6 +35,7 @@
   "entity.guzhenren.horizontal_crash_gu_entity": "横冲蛊",
   "entity.guzhenren.vertical_crash_gu_entity": "直撞蛊",
   "entity.guzhenren.white_boar_gu_entity": "白豕蛊",
+  "entity.guzhenren.wild_boar": "野猪",
   "guzhenren.command.failed.aperture_index": "%s 没有该空窍",
   "guzhenren.command.failed.awakened": "%s 已开窍",
   "guzhenren.command.failed.extreme_physique_required": "%s 必须使用具体的十绝体质",

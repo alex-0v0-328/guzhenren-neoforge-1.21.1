@@ -8,7 +8,8 @@ import net.minecraft.world.level.biome.Biome;
 /**
  * The biome tags this mod declares.
  *
- * <p>Tag-key holder (not a DeferredRegister) for the land biomes each wild Gu family spawns in.
+ * <p>Tag-key holder (not a DeferredRegister) for the land biomes each wild Gu family and the wild boar
+ * spawn in. The wild boar tag is deliberately limited to its five forest biomes.
  * The wild Gu lists must NOT collapse to {@code #minecraft:is_overworld} -- that
  * carries the oceans, whose surface sits at sea level where the height check cannot hold a mote off
  * the water.
@@ -24,6 +25,7 @@ public final class ModBiomeTags {
     public static final TagKey<Biome> HOPE_GU_SPAWNS = key("hope_gu_spawns");
     public static final TagKey<Biome> BOAR_GU_SPAWNS = key("boar_gu_spawns");
     public static final TagKey<Biome> RHINOCEROS_BEETLE_GU_SPAWNS = key("rhinoceros_beetle_gu_spawns");
+    public static final TagKey<Biome> WILD_BOAR_SPAWNS = key("wild_boar_spawns");
     private static TagKey<Biome> key(String name) {
         return TagKey.create(Registries.BIOME, Guzhenren.id(name));
     }

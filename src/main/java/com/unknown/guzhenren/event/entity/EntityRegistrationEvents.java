@@ -2,6 +2,7 @@ package com.unknown.guzhenren.event.entity;
 
 import com.unknown.guzhenren.Guzhenren;
 import com.unknown.guzhenren.entity.FlyingGuEntity;
+import com.unknown.guzhenren.entity.WildBoarEntity;
 import com.unknown.guzhenren.registry.entity.ModEntityTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.RandomSource;
@@ -23,7 +24,9 @@ import net.neoforged.neoforge.event.entity.RegisterSpawnPlacementsEvent;
  *
  * <p>Hope Gu registers {@link com.unknown.guzhenren.entity.FlyingGuEntity}'s attributes; the boar Gu and
  * rhinoceros beetle Gu variants share them with the raised resting flying speed
- * ({@code RESTING_GU_FLYING_SPEED}). Flying Gu families use one surface spawn placement. The flying placement uses
+ * ({@code RESTING_GU_FLYING_SPEED}). Flying Gu families use one surface spawn placement, while the wild boar
+ * mirrors {@link net.minecraft.world.entity.animal.Animal#checkAnimalSpawnRules} so it needs a grass block and
+ * animal-appropriate light. The flying placement uses
  * {@link net.minecraft.world.level.levelgen.Heightmap.Types#MOTION_BLOCKING_NO_LEAVES} and a custom check that
  * requires {@code pos.getY() >= level.getSeaLevel()} — NOT {@code canSeeSky}, because leaves count as cover
  * and would empty every forest floor.
@@ -49,6 +52,7 @@ public final class EntityRegistrationEvents {
         event.put(ModEntityTypes.VERTICAL_CRASH_GU_ENTITY.get(), restingGuAttributes().build());
         event.put(ModEntityTypes.CHARGING_CRASH_GU_4_ENTITY.get(), restingGuAttributes().build());
         event.put(ModEntityTypes.CHARGING_CRASH_GU_5_ENTITY.get(), restingGuAttributes().build());
+        event.put(ModEntityTypes.WILD_BOAR.get(), WildBoarEntity.createAttributes().build());
     }
     private static AttributeSupplier.Builder restingGuAttributes() {
         return FlyingGuEntity.createAttributes().add(Attributes.FLYING_SPEED, RESTING_GU_FLYING_SPEED);
@@ -79,6 +83,12 @@ public final class EntityRegistrationEvents {
         registerSurfaceSpawn(event, ModEntityTypes.VERTICAL_CRASH_GU_ENTITY.get());
         registerSurfaceSpawn(event, ModEntityTypes.CHARGING_CRASH_GU_4_ENTITY.get());
         registerSurfaceSpawn(event, ModEntityTypes.CHARGING_CRASH_GU_5_ENTITY.get());
+        event.register(ModEntityTypes.WILD_BOAR.get(), SpawnPlacementTypes.ON_GROUND,
+                Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                (type, level, reason, pos, random) -> level.getBlockState(pos.below())
+                        .is(net.minecraft.tags.BlockTags.ANIMALS_SPAWNABLE_ON)
+                        && (MobSpawnType.ignoresLightRequirements(reason) || level.getRawBrightness(pos, 0) > 8),
+                RegisterSpawnPlacementsEvent.Operation.REPLACE);
     }
     private static <T extends Mob> void registerSurfaceSpawn(RegisterSpawnPlacementsEvent event, EntityType<T> type) {
         event.register(type, SpawnPlacementTypes.NO_RESTRICTIONS, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,

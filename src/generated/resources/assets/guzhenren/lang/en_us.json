@@ -35,6 +35,7 @@
   "entity.guzhenren.horizontal_crash_gu_entity": "Horizontal Crash Gu",
   "entity.guzhenren.vertical_crash_gu_entity": "Vertical Crash Gu",
   "entity.guzhenren.white_boar_gu_entity": "White Boar Gu",
+  "entity.guzhenren.wild_boar": "Wild Boar",
   "guzhenren.command.failed.aperture_index": "%s has no aperture there",
   "guzhenren.command.failed.awakened": "%s has already awakened",
   "guzhenren.command.failed.extreme_physique_required": "%s must use a concrete Extreme physique",
