@@ -142,7 +142,7 @@ dependencies {
 
     compileOnly files('run/mods/geckolib-neoforge-1.21.1-4.9.2.jar')
     localRuntime files('run/mods/geckolib-neoforge-1.21.1-4.9.2.jar')
-    testRuntimeOnly files('run/mods/geckolib-neoforge-1.21.1-4.9.2.jar')
+    testImplementation files('run/mods/geckolib-neoforge-1.21.1-4.9.2.jar')
 
     // Curios. The ':api' classifier ships only the public packages, so an internal API cannot be
     // reached by accident. The full jar has to stay on the runtime classpath: runData loads

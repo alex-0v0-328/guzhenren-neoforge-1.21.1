@@ -2,6 +2,7 @@ package com.unknown.guzhenren.entity;
 
 import com.unknown.guzhenren.entity.ai.HoverNearPlayerGoal;
 import java.util.function.Supplier;
+import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
@@ -14,6 +15,7 @@ import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,7 +27,9 @@ import org.jetbrains.annotations.Nullable;
  * a leaf narrows it.
  *
  * <p>⚠ {@code isNoGravity()} is a flat true on purpose. The flying move control only clears gravity
- * while it is actively moving the mob, and the hover goal stops the navigation.
+ * while it is actively moving the mob, and the hover goal stops the navigation. The fall check is
+ * likewise neutralized: a Gu descends only under its own goals, so the fall distance that accrues on
+ * the way down must never kill the one-health mote.
  *
  * @author Alex
  * @version 1.0.0
@@ -81,4 +85,10 @@ public class FlyingGuEntity extends WildGuEntity {
     }
     @Override
     public boolean isNoGravity() {return true;}
+    @Override
+    protected void checkFallDamage(double y, boolean onGround, BlockState state, BlockPos pos) {
+        // Every descent is self-propelled (hover approach, landing goal, escape cone), so the accrued
+        // fall distance must never become damage; vanilla flyers such as bees and bats clear this
+        // check the same way.
+    }
 }

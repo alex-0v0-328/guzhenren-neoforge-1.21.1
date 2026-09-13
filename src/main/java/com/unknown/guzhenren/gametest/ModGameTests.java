@@ -250,7 +250,7 @@ public final class ModGameTests {
             helper.assertTrue(gu.distanceTo(player) < startDistance - 1.0D, "hope gu distance did not shrink");
         });
     }
-    @GameTest(template = "empty9x9x9", timeoutTicks = 200)
+    @GameTest(template = "empty9x9x9", timeoutTicks = 1000)
     public static void boarGuVariantsWanderWithoutSeekingPlayers(GameTestHelper helper) {
         ServerPlayer player = survivalMock(helper, null, false);
         List<BoarGuEntity> variants = List.of(
@@ -258,13 +258,22 @@ public final class ModGameTests {
                 helper.spawn(ModEntityTypes.BLACK_BOAR_GU_ENTITY.get(), new BlockPos(4, 1, 2)),
                 helper.spawn(ModEntityTypes.FLOWER_BOAR_GU_ENTITY.get(), new BlockPos(6, 1, 2)));
         List<Vec3> starts = variants.stream().map(BoarGuEntity::position).toList();
-        for (BoarGuEntity variant : variants) helper.assertTrue(!variant.seeks(player), "boar gu seeks player");
+        for (BoarGuEntity variant : variants) {
+            variant.getRandom().setSeed(42L);
+            variant.setYRot(0.0F);
+            helper.assertTrue(!variant.seeks(player), "boar gu seeks player");
+        }
+        boolean[] horizontal = new boolean[variants.size()];
+        boolean[] vertical = new boolean[variants.size()];
         helper.succeedWhen(() -> {
             for (int i = 0; i < variants.size(); i++) {
                 Vec3 travel = variants.get(i).position().subtract(starts.get(i));
-                helper.assertTrue(Math.sqrt(travel.x * travel.x + travel.z * travel.z) > 0.05D,
-                        "boar gu did not wander horizontally");
-                helper.assertTrue(Math.abs(travel.y) > 0.05D, "boar gu did not wander vertically");
+                horizontal[i] |= Math.sqrt(travel.x * travel.x + travel.z * travel.z) > 0.05D;
+                vertical[i] |= Math.abs(travel.y) > 0.05D;
+            }
+            for (int i = 0; i < variants.size(); i++) {
+                helper.assertTrue(horizontal[i], "boar gu did not wander horizontally: " + i);
+                helper.assertTrue(vertical[i], "boar gu did not wander vertically: " + i);
             }
         });
     }

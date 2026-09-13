@@ -16,11 +16,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Writes the biome tags deciding where a wild Gu [野生蛊虫] may spawn.
+ * Writes the biome tags deciding where wild Gu [野生蛊虫] may spawn.
  *
  * <p>Extends {@link net.minecraft.data.tags.TagsProvider} for {@link net.minecraft.world.level.biome.Biome}.
- * Lists all 39 land biomes one by one under {@code hope_gu_spawns} and {@code boar_gu_spawns} from a
- * single shared list; must NOT collapse to {@code #minecraft:is_overworld} because that carries the
+ * Populates the hope, boar and rhinoceros beetle Gu tags from one shared list of 39 land biomes.
+ * Must NOT collapse to {@code #minecraft:is_overworld} because that carries the
  * oceans, whose surface sits at sea level.
  *
  * @author Alex
@@ -89,6 +89,7 @@ public class ModBiomeTagsProvider extends TagsProvider<Biome> {
         for (ResourceKey<Biome> biome : LAND_SPAWN_BIOMES) {
             tag(ModBiomeTags.HOPE_GU_SPAWNS).add(biome);
             tag(ModBiomeTags.BOAR_GU_SPAWNS).add(biome);
+            tag(ModBiomeTags.RHINOCEROS_BEETLE_GU_SPAWNS).add(biome);
         }
     }
 }

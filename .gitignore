@@ -44,3 +44,7 @@ repo/
 !**/src/**/repo/
 .codegraph/
 .mimosa/
+
+### Python export tools ###
+__pycache__/
+*.py[cod]

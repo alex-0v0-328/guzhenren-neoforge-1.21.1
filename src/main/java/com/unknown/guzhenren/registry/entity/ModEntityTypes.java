@@ -3,10 +3,13 @@ package com.unknown.guzhenren.registry.entity;
 import com.unknown.guzhenren.Guzhenren;
 import com.unknown.guzhenren.entity.BoarGuEntity;
 import com.unknown.guzhenren.entity.HopeGuEntity;
+import com.unknown.guzhenren.entity.RhinocerosBeetleGuEntity;
 import com.unknown.guzhenren.registry.item.ModItems;
+import java.util.function.Supplier;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
+import net.minecraft.world.item.Item;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
@@ -14,9 +17,9 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 /**
  * The entity types this mod registers.
  *
- * <p>Deferred holders register Hope Gu [希望蛊] and three boar Gu [豕蛊] variants as ambient entities. The boar
- * holders are summon-only and never enter natural spawning; Hope Gu's client mote is emitted by its entity class.
- * The catch is a bare right click and is never gated on awakening [开窍].
+ * <p>Hope Gu, three boar Gu and four rhinoceros beetle Gu variants are naturally spawning ambient entities;
+ * Hope Gu's client mote is emitted by its entity class.
+ * Gu capture is a bare right click and is never gated on awakening [开窍].
  *
  * @author Alex
  * @version 1.0.0
@@ -61,6 +64,23 @@ public final class ModEntityTypes {
                     .sized(MOTE_WIDTH, MOTE_HEIGHT)
                     .clientTrackingRange(TRACKING_CHUNKS)
                     .build("flower_boar_gu_entity"));
+    public static final DeferredHolder<EntityType<?>, EntityType<RhinocerosBeetleGuEntity>> HORIZONTAL_CRASH_GU_ENTITY =
+            beetle("horizontal_crash_gu_entity", ModItems.HORIZONTAL_CRASH_GU);
+    public static final DeferredHolder<EntityType<?>, EntityType<RhinocerosBeetleGuEntity>> VERTICAL_CRASH_GU_ENTITY =
+            beetle("vertical_crash_gu_entity", ModItems.VERTICAL_CRASH_GU);
+    public static final DeferredHolder<EntityType<?>, EntityType<RhinocerosBeetleGuEntity>> CHARGING_CRASH_GU_4_ENTITY =
+            beetle("charging_crash_gu_4_entity", ModItems.CHARGING_CRASH_GU_4);
+    public static final DeferredHolder<EntityType<?>, EntityType<RhinocerosBeetleGuEntity>> CHARGING_CRASH_GU_5_ENTITY =
+            beetle("charging_crash_gu_5_entity", ModItems.CHARGING_CRASH_GU_5);
+    private static DeferredHolder<EntityType<?>, EntityType<RhinocerosBeetleGuEntity>> beetle(
+            String name, Supplier<Item> caughtGu) {
+        return ENTITY_TYPES.register(name, () -> EntityType.Builder
+                .<RhinocerosBeetleGuEntity>of((type, level) -> new RhinocerosBeetleGuEntity(type, level, caughtGu),
+                        MobCategory.AMBIENT)
+                .sized(MOTE_WIDTH, MOTE_HEIGHT)
+                .clientTrackingRange(TRACKING_CHUNKS)
+                .build(name));
+    }
     public static void register(IEventBus modEventBus) {
         ENTITY_TYPES.register(modEventBus);
     }

@@ -460,6 +460,10 @@ public class ZhCnLanguageProvider extends LanguageProvider {
         add("entity.guzhenren.white_boar_gu_entity", "白豕蛊");
         add("entity.guzhenren.black_boar_gu_entity", "黑豕蛊");
         add("entity.guzhenren.flower_boar_gu_entity", "花豕蛊");
+        add("entity.guzhenren.horizontal_crash_gu_entity", "横冲蛊");
+        add("entity.guzhenren.vertical_crash_gu_entity", "直撞蛊");
+        add("entity.guzhenren.charging_crash_gu_4_entity", "四转横冲直撞蛊");
+        add("entity.guzhenren.charging_crash_gu_5_entity", "五转横冲直撞蛊");
     }
     //endregion
 

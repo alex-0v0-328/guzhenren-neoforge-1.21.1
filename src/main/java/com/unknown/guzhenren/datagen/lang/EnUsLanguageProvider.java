@@ -456,6 +456,10 @@ public class EnUsLanguageProvider extends LanguageProvider {
         add("entity.guzhenren.white_boar_gu_entity", "White Boar Gu");
         add("entity.guzhenren.black_boar_gu_entity", "Black Boar Gu");
         add("entity.guzhenren.flower_boar_gu_entity", "Flower Boar Gu");
+        add("entity.guzhenren.horizontal_crash_gu_entity", "Horizontal Crash Gu");
+        add("entity.guzhenren.vertical_crash_gu_entity", "Vertical Crash Gu");
+        add("entity.guzhenren.charging_crash_gu_4_entity", "Rank Four Charging Crash Gu");
+        add("entity.guzhenren.charging_crash_gu_5_entity", "Rank Five Charging Crash Gu");
     }
     //endregion
 

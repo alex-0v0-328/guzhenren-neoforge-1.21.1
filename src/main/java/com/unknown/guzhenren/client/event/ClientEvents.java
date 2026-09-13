@@ -6,10 +6,12 @@ import com.unknown.guzhenren.client.hud.ChargeHud;
 import com.unknown.guzhenren.client.hud.NourishHud;
 import com.unknown.guzhenren.client.hud.PlayerStatsHud;
 import com.unknown.guzhenren.client.renderer.BoarGuGeoRenderer;
+import com.unknown.guzhenren.client.renderer.RhinocerosBeetleGuGeoRenderer;
 import com.unknown.guzhenren.client.screen.ApertureStorageScreen;
 import com.unknown.guzhenren.client.screen.PlayerInfoScreen;
 import com.unknown.guzhenren.client.screen.RefinementScreen;
 import com.unknown.guzhenren.entity.BoarGuEntity;
+import com.unknown.guzhenren.entity.RhinocerosBeetleGuEntity;
 import com.unknown.guzhenren.item.gu.MortalGuItem;
 import com.unknown.guzhenren.network.payload.DashPayload;
 import com.unknown.guzhenren.registry.effect.ModEffects;
@@ -43,8 +45,8 @@ import yesman.epicfight.world.capabilities.EpicFightCapabilities;
  * ({@link com.unknown.guzhenren.client.hud.PlayerStatsHud},
  * {@link com.unknown.guzhenren.client.hud.ChargeHud},
  * {@link com.unknown.guzhenren.client.hud.NourishHud}), the key mapping for the B panel, the menu
- * screens for the two containers, three fixed-texture renderers sharing one GeckoLib
- * [GeckoLib] Boar Gu [豕蛊] model, and the Hope Gu [希望蛊] entity as a
+ * screens for the two containers, fixed-texture renderers sharing each Gu family's GeckoLib model,
+ * and the Hope Gu [希望蛊] entity as a
  * {@link net.minecraft.client.renderer.entity.NoopRenderer} (pure particles, no model).
  *
  * @author Alex
@@ -65,6 +67,8 @@ public final class ClientEvents {
             Guzhenren.id("nourish");
     private static final GeoModel<BoarGuEntity> BOAR_GU_MODEL =
             new DefaultedEntityGeoModel<>(Guzhenren.id("boar_gu"), false);
+    private static final GeoModel<RhinocerosBeetleGuEntity> BEETLE_GU_MODEL =
+            new DefaultedEntityGeoModel<>(Guzhenren.id("rhinoceros_beetle"), false);
     private static final float DASH_YAW_CROSS = 90.0F;
     private static final float DASH_YAW_DIAGONAL = 45.0F;
     private static boolean previousUp;
@@ -96,6 +100,18 @@ public final class ClientEvents {
                 context -> new BoarGuGeoRenderer(context, BOAR_GU_MODEL, BoarGuGeoRenderer.BLACK_TEXTURE));
         event.registerEntityRenderer(ModEntityTypes.FLOWER_BOAR_GU_ENTITY.get(),
                 context -> new BoarGuGeoRenderer(context, BOAR_GU_MODEL, BoarGuGeoRenderer.FLOWER_TEXTURE));
+        event.registerEntityRenderer(ModEntityTypes.HORIZONTAL_CRASH_GU_ENTITY.get(),
+                context -> new RhinocerosBeetleGuGeoRenderer(context, BEETLE_GU_MODEL,
+                        RhinocerosBeetleGuGeoRenderer.LIGHT_TEXTURE));
+        event.registerEntityRenderer(ModEntityTypes.VERTICAL_CRASH_GU_ENTITY.get(),
+                context -> new RhinocerosBeetleGuGeoRenderer(context, BEETLE_GU_MODEL,
+                        RhinocerosBeetleGuGeoRenderer.ORIGINAL_TEXTURE));
+        event.registerEntityRenderer(ModEntityTypes.CHARGING_CRASH_GU_4_ENTITY.get(),
+                context -> new RhinocerosBeetleGuGeoRenderer(context, BEETLE_GU_MODEL,
+                        RhinocerosBeetleGuGeoRenderer.DARK_TEXTURE));
+        event.registerEntityRenderer(ModEntityTypes.CHARGING_CRASH_GU_5_ENTITY.get(),
+                context -> new RhinocerosBeetleGuGeoRenderer(context, BEETLE_GU_MODEL,
+                        RhinocerosBeetleGuGeoRenderer.DARK_TEXTURE));
     }
     @SubscribeEvent
     public static void onClientTick(ClientTickEvent.Post event) {

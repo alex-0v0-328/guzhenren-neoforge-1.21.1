@@ -1,22 +1,18 @@
 package com.unknown.guzhenren.entity.ai;
 
-import com.unknown.guzhenren.entity.BoarGuEntity;
+import com.unknown.guzhenren.entity.RestingFlyingGuEntity;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomFlyingGoal;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * The wander course of a boar Gu [豕蛊]: continuous random flight with a forced course change.
+ * The continuous random flight goal shared by the resting flying Gu entities.
  *
- * <p>Extends {@link net.minecraft.world.entity.ai.goal.WaterAvoidingRandomFlyingGoal} so the cone-based
- * point picking stays vanilla. A finished path is re-selected on the very next tick, and every
- * {@link #RECOURSE_TICKS} ticks the course is re-picked mid-flight. Each re-selection rolls a
- * one-in-ten chance to request a landing, handing control to
- * {@link com.unknown.guzhenren.entity.ai.LandRestGoal}. ⚠ {@code canUse} force-triggers past the
- * vanilla {@code noActionTime >= 100} gate, which would otherwise permanently reject the goal.
+ * <p>A finished path is selected again on the next tick. Every 100 ticks the current course is
+ * replaced, and each replacement has a one-in-ten chance to request a landing. The explicit phase
+ * check keeps the goal from restarting while the landing goal owns a ground rest.
  *
  * @author Alex
  * @version 1.0.0
- * @see com.unknown.guzhenren.entity.BoarGuEntity
  * @since 1.0.0
  */
 
@@ -25,26 +21,32 @@ public class WanderCourseGoal extends WaterAvoidingRandomFlyingGoal {
     private static final double SPEED_MODIFIER = 1.0D;
     private static final int RECOURSE_TICKS = 100;
     private static final int LANDING_ROLL_SIDES = 10;
-    private final BoarGuEntity boar;
+    private final RestingFlyingGuEntity gu;
     private int courseTicks;
-    public WanderCourseGoal(BoarGuEntity boar) {
-        super(boar, SPEED_MODIFIER);
-        this.boar = boar;
+
+    public WanderCourseGoal(RestingFlyingGuEntity gu) {
+        super(gu, SPEED_MODIFIER);
+        this.gu = gu;
     }
+
     @Override
     public boolean canUse() {
+        if (gu.phase() != RestingFlyingGuEntity.FlightPhase.FLYING) return false;
         trigger();
         if (!super.canUse()) return false;
         rollLanding();
         return true;
     }
+
     @Override
     public void start() {
         super.start();
         courseTicks = 0;
     }
+
     @Override
     public boolean requiresUpdateEveryTick() {return true;}
+
     @Override
     public void tick() {
         courseTicks++;
@@ -52,10 +54,11 @@ public class WanderCourseGoal extends WaterAvoidingRandomFlyingGoal {
         courseTicks = 0;
         Vec3 course = getPosition();
         if (course == null) return;
-        boar.getNavigation().moveTo(course.x, course.y, course.z, speedModifier);
+        gu.getNavigation().moveTo(course.x, course.y, course.z, speedModifier);
         rollLanding();
     }
+
     private void rollLanding() {
-        if (boar.getRandom().nextInt(LANDING_ROLL_SIDES) == 0) boar.requestLanding();
+        if (gu.getRandom().nextInt(LANDING_ROLL_SIDES) == 0) gu.requestLanding();
     }
 }
