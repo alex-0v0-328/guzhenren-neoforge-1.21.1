@@ -1,67 +1,68 @@
 # 蛊真人
 <sub>Guzhenren — current technical reference for a NeoForge 1.21.1 xianxia RPG mod. Java 21; Epic Fight & GeckoLib required; L1/L2/L3 tests; mod code all rights reserved.</sub>
 
-围绕**空窍、肉身、脑海**三个域展开的仙侠 RPG 模组。本文只写技术规格。
+围绕**空窍、肉身、魂魄、流派、脑海**五个代码域展开的仙侠 RPG 模组。玩家阅读入口仍按空窍、肉身、脑海组织；代码把魂魄独立成域，把气道与力道放在 `path/` 子域。本文只写已由源码核对的技术规格。
 
 ## 工具链
 
-|                              |                                       |
-|------------------------------|---------------------------------------|
-| Minecraft                    | `1.21.1`                              |
-| NeoForge                     | `21.1.238`                            |
-| Parchment                    | `2024.11.17`                          |
-| Java                         | `21`                                  |
-| mod id / package             | `guzhenren` · `com.unknown.guzhenren` |
-| 必需依赖                     | `Epic Fight` · `GeckoLib`             |
-| 可选依赖                     | `JEI` · `Curios`                      |
+| | |
+|---|---|
+| Minecraft | `1.21.1` |
+| NeoForge | `21.1.238` |
+| Parchment | `2024.11.17` |
+| Java | `21` |
+| mod id / package | `guzhenren` · `com.unknown.guzhenren` |
+| 必需依赖 | `Epic Fight` · `GeckoLib` |
+| 可选依赖 | `JEI` · `Curios` |
 
+Windows 下从项目目录运行：
+
+```text
+gradlew.bat build
+gradlew.bat runGameTestServer
+gradlew.bat runData
 ```
-./gradlew build
-./gradlew runData
-./gradlew runClient
+
+如需做源码与玩家向 wiki 的一致性检查，显式传入 wiki 根目录：
+
+```text
+gradlew.bat build -PwikiDir="C:\path\to\project-wiki"
 ```
 
-入口 `Guzhenren.java`（通用）/ `GuzhenrenClient.java`（仅客户端）。
-⚠ `src/generated/resources` 是 source set，`runData` 的产物**必须提交**。
+未指定 `-PwikiDir` 时，一致性检查跳过，不会自行猜目录或修改 wiki。`runData` 使用隔离的 `run-data/`；GameTest 使用隔离的 `run-gametest/`。`src/generated/resources` 属于源码集，provider 改动后必须重新生成并提交产物。
 
-## 数据层
+入口是 `Guzhenren.java`（通用）与 `GuzhenrenClient.java`（客户端）。`runClient` 的视觉、手感和整包兼容仍由 Alex 手工验收。
 
-玩家的持久状态主要是 **NeoForge data attachment**：九个核心 attachment 是**不可变 record**，写入只经过拥有它的 service；另有出生闩与瞬时真元 carry。
+## 五域数据层
 
-| Attachment                                                 | 装什么                               |
-|------------------------------------------------------------|--------------------------------------|
-| `ApertureData` · `ApertureNourishData` · `ApertureStorage` | 空窍、修炼进度、蛊虫仓               |
-| `BodyData`                                                 | 生命形态、种族、年龄与寿元、死气欠账 |
-| `SoulData`                                                 | 魂魄                                 |
-| `PathData` · `PathQiData` · `PathStrengthData`             | 33 条流派道痕、八种气、力道数据      |
-| `MindData`                                                 | 才情与念/意/情三个池                 |
+玩家持久状态主要是 NeoForge data attachment：九个不可变 record attachment 由各域 service 写入；另有 `BORN`（序列化、不同步）与 `ESSENCE_CARRY`（不序列化、不同步）两个特殊字段。
 
-⚠ 同步靠 attachment 自带的 `sync(OWNER_ONLY, …)`，**不写玩家数据的 payload**；当前有六个自定义 payload，全部是 B 面板或移动操作的客户端意图。
+| 域 | attachment | 内容 |
+|---|---|---|
+| `aperture` 空窍 | `ApertureData`、`ApertureNourishData`、`ApertureStorage` | 空窍、温养会话、蛊虫仓与本命格 |
+| `body` 肉身 | `BodyData` | 体质、种族、年龄、寿元与形态 |
+| `soul` 魂魄 | `SoulData` | 当前魂魄与上限 |
+| `path` 流派 | `PathData`、`PathQiData`、`PathStrengthData` | 造诣道痕、八种气、力道数据 |
+| `mind` 脑海 | `MindData` | 才情与念/意/情三池 |
 
-耐力由 **Epic Fight** 独占保存、回复、HUD 与普通消耗；GZR 只通过兼容桥接调整最大耐力，并让僵尸与半僵的技能耐力消耗为零。
+除 `ApertureStorage` 外，玩家状态 attachment 以 `OWNER_ONLY` 同步给持有者，并由各自 `CODEC` 持久化。`ApertureStorage` 序列化但不同步，客户端通过容器槽位、原版点击通道和 `ContainerData` 读取视图。`ESSENCE_CARRY` 是真元回复余数，原地更新且不序列化；`BORN` 只保存出生初始化闩。玩家数据不写进自定义 payload。
 
-## 承重约定
+## 入口与服务边界
 
-- **一件事一扇门。** 攻击力只经 `BodyAttackService`，时间流速只经 `PathTimeFlowService`，道痕只经 `PathService`；调用点不自行计算。
-- **每秒一次心跳**（`PlayerTickEvents`，`tickCount % 20`），一串步骤，**先后顺序承重**。
-  ⚠ 任何挂在心跳上的间隔必须整除 20，否则静默不执行。
-- **时间锚**（存 game time、事后反推数量）是主要状态形状之一：气的衰减、冷却、半僵窗口。
-  ⚠ 哨兵永远不能是 `0` —— 游戏时钟的 0 是真值。
-- **枚举是封闭词汇**，附属模组扩展的是数据层而不是词汇：不新增 `GuPath` / `Rank` / `MarkTag` 常量。
-- **派生优先于存储**：上限、称号、承受、攻击力都是算出来的，不落盘。
+- 空窍、肉身、魂魄、流派和脑海的写入分别经过对应 service；调用点不自行复制公式。
+- `PlayerDataService` 只负责跨域生命周期：登录、出生、睡眠、clone、respawn 与 reset；登录还会迁移旧体质、同步天赋道痕并刷新生命、攻击和 Epic Fight 派生属性。
+- 每秒心跳由 `PlayerTickEvents` 按固定顺序驱动老化、存储喂养、气效果、寿元、真元、温养、脑海、压力和致死检查。
+- 六个自定义 payload 全部只上行传客户端意图：开存储、选辅修、开炼蛊、温养 `START/CANCEL`、冲击窍壁（无字段）和 Dash（`vertical`/`horizontal`/`yRot`）。下行玩家数据只走 attachment；容器使用原版槽位、按钮和 `ContainerData`。
 
 ## 内容系统
 
-物品与蛊虫（两条分支：一次性 / 需照顾；后者包含用完消失的蛊）· 炼蛊（26 秒仪式 + 蛊方）· 修炼（温养与冲击窍壁）·
-气（八种，独立资源）· 生命形态四态 · 野生蛊虫实体 · 六页 B 面板与 HUD · `/guzhenren`（别名 `/gzr`，权限 2）。
+物品分为一次性蛊与需照顾蛊；`TendedGuItem` 的 `RefinedGuState` 是栈组件，野生栈没有该组件，炼化后才进入温养、喂养和使用流程。炼蛊使用 `GuRecipe` 数据配方与 `RefinementMenu`，输入、时钟和输出是临时容器状态，当前只有两张测试蛊方。自然生成的希望蛊、三种豕蛊和四种横冲系甲虫由群系数据与实体 AI 接入，右键捕捉得到未炼化物品。
 
-⚠ 仍在开发阶段：蛊方只有两张，其余物品走创造模式栏或 `/give`。
+Epic Fight 保存耐力与普通消耗，GZR 通过 `EpicFightIntegration` 提供派生上限、技能与 Dash 桥接；GeckoLib 负责豕蛊、横冲系甲虫与野猪的模型和动画。甲虫共用一套几何与五段动画，横冲为浅色、直撞为原色、四/五转横冲直撞共用深色；物品图标保持独立。野猪为独立地面中立生物，在温带森林自然生成，仅受击个体反击，服务端结算冲撞与顶飞，掉落原版猪肉；支持 `/summon guzhenren:wild_boar`，不提供刷怪蛋、繁殖或驯服。JEI 目前只有 optional 元数据，没有 Java 插件或构建依赖；Curios 为 optional，使用 API `compileOnly`、完整 jar `localRuntime`，其数据 provider 在 `runData` 生成槽位文件。FTB Quests 不进入核心模组，属于整合包层边界。
 
 ## 测试
 
-`src/pureTest/java` 是纯 JVM 的 L1，`src/test/java` 是可用注册表但没有 world 的 L2；两者都是 JUnit 5，`./gradlew build` 会跑。
-真实世界与 tick 行为放在 `src/main/java/.../gametest` 的 L3，使用 `./gradlew runGameTestServer`。
-⚠ **不 mock Minecraft。**
+`src/pureTest/java` 是不启动 modded runtime 的 L1 纯 JVM 测试；`src/test/java` 是可加载注册表但没有 world 的 L2；`src/main/java/.../gametest` 是需要真实 world/tick 的 L3 GameTest。三层都使用 JUnit/GameTest 的真实约束，不 mock Minecraft。构建或 GameTest 通过不等于客户端视觉、手感或整包兼容已验收。
 
 ## 许可
 
