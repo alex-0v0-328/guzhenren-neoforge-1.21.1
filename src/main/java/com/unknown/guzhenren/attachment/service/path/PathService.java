@@ -1,5 +1,6 @@
 package com.unknown.guzhenren.attachment.service.path;
 
+import com.google.common.math.LongMath;
 import com.unknown.guzhenren.attachment.data.path.PathData;
 import com.unknown.guzhenren.attachment.data.path.PathEntry;
 import com.unknown.guzhenren.custom.enums.path.GuAttainment;
@@ -45,7 +46,7 @@ public final class PathService {
         store(p, get(p).with(path, entry(p, path).withMark(tag, v)));
     }
     public static void addMark(@NotNull ServerPlayer p, @NotNull GuPath path, @NotNull MarkTag tag, long delta) {
-        setMark(p, path, tag, mark(p, path, tag) + delta);
+        setMark(p, path, tag, LongMath.saturatedAdd(mark(p, path, tag), delta));
     }
     public static void shiftAttainment(@NotNull ServerPlayer p, @NotNull GuPath path, int delta) {
         setAttainment(p, path, attainment(p, path).shift(delta));

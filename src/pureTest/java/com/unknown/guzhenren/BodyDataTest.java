@@ -15,6 +15,15 @@ import org.junit.jupiter.api.Test;
 class BodyDataTest {
 
     @Test
+    void yearConversionAndAgingDoNotWrapAtLongLimits() {
+        assertEquals(Long.MAX_VALUE, BodyData.parts(Long.MAX_VALUE));
+        assertEquals(Long.MIN_VALUE, BodyData.parts(Long.MIN_VALUE));
+        BodyData body = BodyData.DEFAULT.withAgeParts(Long.MAX_VALUE).withLifespanParts(Long.MIN_VALUE);
+        BodyData lived = body.lived(1L, 1L);
+        assertEquals(Long.MAX_VALUE, lived.ageParts());
+        assertEquals(Long.MIN_VALUE, lived.lifespanParts());
+    }
+    @Test
     @DisplayName("physiques accumulate while zombie forms remain mutually exclusive")
     void physiquesAccumulateWithExclusiveZombieForms() {
         BodyData body = new BodyData(EnumSet.of(Physique.ZOMBIE, Physique.HALF_ZOMBIE, Physique.EXTREME),

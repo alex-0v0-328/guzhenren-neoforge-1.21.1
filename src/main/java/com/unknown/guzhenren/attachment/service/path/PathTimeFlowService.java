@@ -1,5 +1,6 @@
 package com.unknown.guzhenren.attachment.service.path;
 
+import com.google.common.math.LongMath;
 import com.unknown.guzhenren.effect.timed.TimeRateUpEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.player.Player;
@@ -58,7 +59,7 @@ public final class PathTimeFlowService {
      * ⚠ Floored at one tick: a short wait divided by a fast clock is zero, which reads as "no wait".
      */
     public static int waited(int rate, int ticks) {return ticks <= 0 ? ticks : Math.max(1, ticks / rate);}
-    public static long perStep(int rate, long amount) {return amount * rate;}
+    public static long perStep(int rate, long amount) {return LongMath.saturatedMultiply(amount, rate);}
     public static double perStep(int rate, double amount) {return amount * rate;}
     //endregion
 }

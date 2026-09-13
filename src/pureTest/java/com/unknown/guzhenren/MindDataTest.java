@@ -24,6 +24,22 @@ class MindDataTest {
         return d.taggedThoughts().values().stream().mapToLong(Long::longValue).sum();
     }
     @Test
+    void extremeCapDoesNotOverflowBurstThreshold() {
+        MindPool pool = new MindPool(Long.MAX_VALUE, Long.MAX_VALUE, false);
+        assertEquals(Long.MAX_VALUE, pool.burstAt());
+        assertFalse(pool.isOverflowing());
+    }
+    @Test
+    void largeTaggedThoughtsScaleWithoutMultiplicationOverflow() {
+        assertEquals(Long.MAX_VALUE / 2, mind(Long.MAX_VALUE / 2, Long.MAX_VALUE)
+                .taggedThoughts().get(ThoughtTag.EVIL));
+    }
+    @Test
+    void malformedNegativeTagsAreRemoved() {
+        MindData data = new MindData(Brilliance.ORDINARY, Map.of(), Map.of(ThoughtTag.EVIL, -1L));
+        assertTrue(data.taggedThoughts().isEmpty());
+    }
+    @Test
     @DisplayName("tagged thoughts clamp to the pool's current -- the sum never exceeds it")
     void taggedClampedToCurrent() {
         MindData d = mind(30, 50);

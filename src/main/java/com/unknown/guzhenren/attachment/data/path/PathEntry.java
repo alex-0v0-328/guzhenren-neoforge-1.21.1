@@ -1,5 +1,6 @@
 package com.unknown.guzhenren.attachment.data.path;
 
+import com.google.common.math.LongMath;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.unknown.guzhenren.custom.enums.path.GuAttainment;
@@ -51,7 +52,7 @@ public record PathEntry(GuAttainment attainment, Map<MarkTag, Long> marks) {
     public boolean isDefault() {return attainment == GuAttainment.NONE && marks.isEmpty();}
     private static long sum(Map<MarkTag, Long> tags) {
         long total = 0L;
-        for (long value : tags.values()) total += value;
+        for (long value : tags.values()) total = LongMath.saturatedAdd(total, value);
         return total;
     }
     private static Map<MarkTag, Long> normalized(Map<MarkTag, Long> tags) {

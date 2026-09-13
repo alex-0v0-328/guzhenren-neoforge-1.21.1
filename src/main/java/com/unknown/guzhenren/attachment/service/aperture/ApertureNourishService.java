@@ -65,12 +65,13 @@ public final class ApertureNourishService {
         return ApertureService.aperture(p, index).nourishProgress() / (float) ApertureNourishData.FULL;
     }
     public static int targetIndex(@NotNull Player p) {
-        return Math.clamp(get(p).target(), ApertureData.PRIMARY, ApertureService.get(p).count() - 1);
+        int count = ApertureService.get(p).count();
+        return count == 0 ? ApertureData.PRIMARY : Math.clamp(get(p).target(), ApertureData.PRIMARY, count - 1);
     }
     //region what the screen asks
     public static boolean canNourish(@NotNull Player p, int index) {
         if (!ApertureService.hasAperture(p) || isCultivating(p)) return false;
-        if (index >= ApertureService.get(p).count()) return false;
+        if (index < 0 || index >= ApertureService.get(p).count()) return false;
         if (ApertureService.status(p, index) != ApertureStatus.NORMAL) return false;
         return !atCeiling(p, index)
                 && ApertureService.aperture(p, index).nourishProgress() < ApertureNourishData.FULL;
@@ -131,9 +132,10 @@ public final class ApertureNourishService {
     private static boolean nourishSecond(ServerPlayer player) {
         ApertureNourishData data = get(player);
         if (!data.cultivating()) return false;
+        if (!ApertureService.hasAperture(player)) {cancel(player); return false;}
         int target = targetIndex(player);
         if (ApertureService.status(player, target) != ApertureStatus.NORMAL
-                || !ApertureService.hasAperture(player) || atCeiling(player, target)) {cancel(player); return false;}
+                || atCeiling(player, target)) {cancel(player); return false;}
 
         player.setDeltaMovement(Vec3.ZERO);
 

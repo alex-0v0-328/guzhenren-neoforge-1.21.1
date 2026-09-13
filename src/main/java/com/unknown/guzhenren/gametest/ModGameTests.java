@@ -2,14 +2,22 @@ package com.unknown.guzhenren.gametest;
 
 import com.mojang.authlib.GameProfile;
 import com.unknown.guzhenren.Guzhenren;
+import com.unknown.guzhenren.attachment.PlayerDataService;
 import com.unknown.guzhenren.attachment.data.aperture.ApertureData;
+import com.unknown.guzhenren.attachment.data.aperture.ApertureNourishData;
 import com.unknown.guzhenren.attachment.data.aperture.ApertureStorage;
 import com.unknown.guzhenren.attachment.service.aperture.ApertureNourishService;
 import com.unknown.guzhenren.attachment.service.aperture.AperturePressureExplosionTask;
 import com.unknown.guzhenren.attachment.service.aperture.ApertureService;
 import com.unknown.guzhenren.attachment.service.aperture.ApertureStorageService;
+import com.unknown.guzhenren.attachment.service.body.BodyService;
+import com.unknown.guzhenren.attachment.service.mind.MindService;
+import com.unknown.guzhenren.attachment.service.path.PathQiService;
+import com.unknown.guzhenren.attachment.service.path.PathService;
+import com.unknown.guzhenren.attachment.service.soul.SoulService;
 import com.unknown.guzhenren.custom.enums.aperture.Rank;
 import com.unknown.guzhenren.custom.enums.body.ExtremePhysique;
+import com.unknown.guzhenren.custom.enums.body.Physique;
 import com.unknown.guzhenren.custom.enums.path.GuPath;
 import com.unknown.guzhenren.display.InfoModel;
 import com.unknown.guzhenren.entity.BoarGuEntity;
@@ -30,6 +38,7 @@ import java.util.UUID;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.Connection;
 import net.minecraft.network.PacketSendListener;
 import net.minecraft.network.chat.Component;
@@ -50,6 +59,13 @@ import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import yesman.epicfight.api.event.EpicFightEventHooks;
+import yesman.epicfight.api.event.types.player.SetTargetEvent;
+import yesman.epicfight.api.event.types.player.SkillConsumeEvent;
+import yesman.epicfight.registry.entries.EpicFightSkills;
+import yesman.epicfight.skill.Skill;
+import yesman.epicfight.world.capabilities.EpicFightCapabilities;
+import yesman.epicfight.world.capabilities.entitypatch.player.ServerPlayerPatch;
 
 /**
  * Runtime behavior tests executed inside a real server tick loop via {@code runGameTestServer}.
@@ -70,6 +86,90 @@ public final class ModGameTests {
     private static final String HUNGRY_KEY = "guzhenren.item.gu.hungry";
     private static final String STARVED_KEY = "guzhenren.item.gu.starved";
     private ModGameTests() {}
+    @GameTest(template = "empty9x9x9", timeoutTicks = 100)
+    public static void bodyAndDistilledEssenceAdditionsDoNotWrap(GameTestHelper helper) {
+        ServerPlayer player = storagePlayer(helper);
+        BodyService.addAge(player, Long.MAX_VALUE);
+        helper.assertValueEqual(BodyService.get(player).ageParts(), Long.MAX_VALUE, "age addition saturates");
+        BodyService.addLifespan(player, Long.MAX_VALUE);
+        helper.assertValueEqual(BodyService.get(player).lifespanParts(), Long.MAX_VALUE, "lifespan addition saturates");
+        BodyService.setLifespan(player, Long.MIN_VALUE);
+        BodyService.addLifespan(player, Long.MAX_VALUE);
+        helper.assertValueEqual(BodyService.get(player).lifespanParts(), Long.MAX_VALUE,
+                "year conversion must not saturate before adding signed lifespan");
+        var aperture = ApertureService.aperture(player).withDistilling(true).withDistilledEssence(1L);
+        ApertureService.set(player, ApertureData.PRIMARY, aperture);
+        com.unknown.guzhenren.attachment.service.aperture.ApertureEssenceService.addDistilled(player, Long.MAX_VALUE);
+        helper.assertTrue(ApertureService.aperture(player).distilledEssence() > 0L,
+                "positive distilled essence addition emptied the pool");
+        helper.succeed();
+    }
+    @GameTest(template = "empty9x9x9", timeoutTicks = 100)
+    public static void deathQiRefundPreservesLargeFraction(GameTestHelper helper) {
+        ServerPlayer player = storagePlayer(helper);
+        player.setData(ModAttachments.BODY, BodyService.get(player).withLifespanParts(0L)
+                .withDeathQiLifespanLost(30_000_000_000_000L));
+        BodyService.refundDeathQiDebt(player, 3, 4);
+        helper.assertValueEqual(BodyService.get(player).lifespanParts(), 3_240_000_000_000_000_000L,
+                "refund multiplication must retain the exact three-quarter result");
+        helper.assertValueEqual(BodyService.get(player).deathQiLifespanLost(), 0L, "refund clears the debt");
+        player.setData(ModAttachments.BODY, BodyService.get(player).withLifespanParts(Long.MIN_VALUE)
+                .withDeathQiLifespanLost(Long.MAX_VALUE));
+        BodyService.refundDeathQiDebt(player, 3, 4);
+        helper.assertValueEqual(BodyService.get(player).lifespanParts(), Long.MAX_VALUE,
+                "refund must saturate only after adding signed lifespan");
+        helper.succeed();
+    }
+    @GameTest(template = "empty9x9x9", timeoutTicks = 100)
+    public static void soulAddCannotWrapIntoDeath(GameTestHelper helper) {
+        ServerPlayer player = survivalMock(helper, null, true);
+        SoulService.addMax(player, Long.MAX_VALUE);
+        helper.assertValueEqual(SoulService.get(player).maxSoul(), Long.MAX_VALUE, "soul cap saturates");
+        SoulService.addCurrent(player, Long.MAX_VALUE);
+        helper.assertValueEqual(SoulService.get(player).currentSoul(), Long.MAX_VALUE, "soul current saturates");
+        SoulService.addCurrent(player, Long.MIN_VALUE);
+        helper.assertValueEqual(SoulService.get(player).currentSoul(), 0L, "negative delta clamps to zero");
+        player.getServer().getCommands().performPrefixedCommand(player.createCommandSourceStack().withPermission(4),
+                "gzr soul max sub -9223372036854775808");
+        helper.assertValueEqual(SoulService.get(player).maxSoul(), Long.MAX_VALUE, "subtraction cannot negate MIN");
+        helper.succeed();
+    }
+    @GameTest(template = "empty9x9x9", timeoutTicks = 100)
+    public static void mindAddAndRegenerationSaturate(GameTestHelper helper) {
+        ServerPlayer player = survivalMock(helper, null, true);
+        var thoughts = com.unknown.guzhenren.custom.enums.wisdom.WisdomType.THOUGHTS;
+        MindService.addMax(player, thoughts, Long.MAX_VALUE);
+        helper.assertValueEqual(MindService.max(player, thoughts), Long.MAX_VALUE, "mind cap saturates");
+        MindService.setCurrent(player, thoughts, Long.MAX_VALUE - 1L);
+        MindService.setBrilliance(player, com.unknown.guzhenren.custom.enums.wisdom.Brilliance.OUTSTANDING);
+        MindService.regenStep(player);
+        helper.assertValueEqual(MindService.current(player, thoughts), Long.MAX_VALUE, "regen saturates");
+        MindService.addCurrent(player, thoughts, 1L);
+        helper.assertValueEqual(MindService.current(player, thoughts), Long.MAX_VALUE, "mind current saturates");
+        helper.succeed();
+    }
+    @GameTest(template = "empty9x9x9", timeoutTicks = 100)
+    public static void pathResourceAdditionSaturates(GameTestHelper helper) {
+        ServerPlayer player = survivalMock(helper, null, true);
+        var tag = com.unknown.guzhenren.custom.enums.path.MarkTag.NATURAL;
+        var qi = com.unknown.guzhenren.custom.enums.qi.QiKind.HUMAN;
+        PathService.setMark(player, GuPath.STRENGTH, tag, 1L);
+        PathService.addMark(player, GuPath.STRENGTH, tag, Long.MAX_VALUE);
+        helper.assertValueEqual(PathService.mark(player, GuPath.STRENGTH, tag), Long.MAX_VALUE, "marks saturate");
+        PathQiService.set(player, qi, 1L);
+        PathQiService.add(player, qi, Long.MAX_VALUE);
+        helper.assertValueEqual(PathQiService.current(player, qi), Long.MAX_VALUE, "qi saturates");
+        var strength = com.unknown.guzhenren.custom.enums.qi.QiKind.STRENGTH;
+        PathQiService.set(player, strength, 640L);
+        helper.assertTrue(player.hasEffect(com.unknown.guzhenren.registry.effect.ModEffects.STRENGTH_QI),
+                "held strength qi projects its effect");
+        player.setData(ModAttachments.QI, PathQiService.get(player).with(strength,
+                new com.unknown.guzhenren.attachment.data.path.PathQiEntry(640L, 0L)));
+        PathQiService.syncEffects(player);
+        helper.assertTrue(!player.hasEffect(com.unknown.guzhenren.registry.effect.ModEffects.STRENGTH_QI),
+                "expired hold removes the effect even before all qi decays");
+        helper.succeed();
+    }
     @GameTest(template = "empty9x9x9", timeoutTicks = 100)
     public static void sceneSupportsBlockPlacement(GameTestHelper helper) {
         helper.setBlock(CENTER, Blocks.DIRT);
@@ -317,6 +417,117 @@ public final class ModGameTests {
         helper.assertValueEqual(titles(player), List.of(new InfoModel.ApertureIndex(1, 0),
                 new InfoModel.ApertureIndex(2, 1)), "two apertures keep both clickable title rows");
         helper.succeed();
+    }
+    @GameTest(template = "empty9x9x9", timeoutTicks = 100)
+    public static void emptyApertureCancelsStaleNourishing(GameTestHelper helper) {
+        ServerPlayer player = survivalMock(helper, null, true);
+        player.setData(ModAttachments.NOURISH, ApertureNourishData.DEFAULT.withCultivating(true));
+        helper.assertValueEqual(ApertureNourishService.targetIndex(player), ApertureData.PRIMARY,
+                "empty aperture has a safe UI target");
+        ApertureNourishService.tickNourish(player);
+        helper.assertTrue(!ApertureNourishService.isCultivating(player), "stale session canceled without apertures");
+        helper.succeed();
+    }
+    @GameTest(template = "empty9x9x9", timeoutTicks = 100)
+    public static void nourishmentRejectsInvalidAndRepeatedStarts(GameTestHelper helper) {
+        ServerPlayer player = storagePlayer(helper);
+        for (int index : new int[]{-1, Integer.MIN_VALUE, 1, Integer.MAX_VALUE}) {
+            helper.assertTrue(!ApertureNourishService.canNourish(player, index), "invalid target must be rejected");
+            ApertureNourishService.start(player, index);
+            helper.assertTrue(!ApertureNourishService.isCultivating(player), "invalid start changed session");
+        }
+        ApertureNourishService.start(player, 0);
+        ApertureNourishData session = ApertureNourishService.get(player).withStarvedSinceTick(0L);
+        player.setData(ModAttachments.NOURISH, session);
+        ApertureNourishService.start(player, 0);
+        helper.assertValueEqual(ApertureNourishService.get(player), session, "repeated start reset starvation anchor");
+        helper.succeed();
+    }
+    @GameTest(template = "empty9x9x9", timeoutTicks = 100)
+    public static void deathCloneKeepsDataAndCopiesStorage(GameTestHelper helper) {
+        ServerPlayer from = storagePlayer(helper);
+        PlayerDataService.onBirth(from);
+        BodyService.setExtremePhysique(from, ExtremePhysique.GREAT_STRENGTH_TRUE_MARTIAL);
+        BodyService.addPhysique(from, Physique.ZOMBIE);
+        ApertureStorageService.set(from, 0, List.of(new ItemStack(ModItems.SECOND_APERTURE_GU_1.get(), 2)));
+        ServerPlayer to = survivalMock(helper, null, true);
+        PlayerDataService.onClone(from, to, true, true);
+        PlayerDataService.onRespawn(to);
+        helper.assertValueEqual(ApertureService.get(to), ApertureService.get(from),
+                "death with keepInventory lost apertures");
+        helper.assertValueEqual(to.getData(ModAttachments.MIND).brilliance(),
+                from.getData(ModAttachments.MIND).brilliance(),
+                "retained death rerolled brilliance");
+        helper.assertTrue(to.getData(ModAttachments.BORN), "clone lost birth latch");
+        helper.assertTrue(BodyService.isExtreme(to) && !BodyService.isUndead(to),
+                "revival lost extreme or kept undead");
+        ApertureStorageService.items(to, 0).getFirst().shrink(1);
+        helper.assertValueEqual(ApertureStorageService.items(from, 0).getFirst().getCount(), 2,
+                "cloned storage shares mutable stacks with original");
+        helper.succeed();
+    }
+    @GameTest(template = "empty9x9x9", timeoutTicks = 100)
+    public static void deathResetClearsExtremeAndNourishment(GameTestHelper helper) {
+        ServerPlayer from = storagePlayer(helper);
+        BodyService.setExtremePhysique(from, ExtremePhysique.GREAT_STRENGTH_TRUE_MARTIAL);
+        ApertureNourishService.start(from, 0);
+        ServerPlayer to = survivalMock(helper, null, true);
+        PlayerDataService.onClone(from, to, true, false);
+        PlayerDataService.onRespawn(to);
+        helper.assertTrue(!ApertureService.hasAperture(to), "reset retained apertures");
+        helper.assertTrue(!BodyService.isExtreme(to), "reset retained extreme physique");
+        helper.assertTrue(!ApertureNourishService.isCultivating(to), "reset retained nourishment");
+        helper.assertTrue(to.getData(ModAttachments.BORN), "reset did not initialize newborn");
+        helper.succeed();
+    }
+    @GameTest(template = "empty9x9x9", timeoutTicks = 100)
+    public static void nonDeathCloneIgnoresKeepInventory(GameTestHelper helper) {
+        ServerPlayer from = storagePlayer(helper);
+        ApertureService.openSecondary(from, Rank.THREE);
+        PlayerDataService.onBirth(from);
+        ServerPlayer to = survivalMock(helper, null, true);
+        PlayerDataService.onClone(from, to, false, false);
+        helper.assertValueEqual(ApertureService.get(to), ApertureService.get(from), "dimension clone lost apertures");
+        helper.assertValueEqual(to.getData(ModAttachments.MIND), from.getData(ModAttachments.MIND),
+                "dimension clone lost mind");
+        helper.assertTrue(to.getData(ModAttachments.BORN), "dimension clone lost birth latch");
+        helper.succeed();
+    }
+    @GameTest(template = "empty9x9x9", timeoutTicks = 100)
+    public static void epicFightDoesNotTargetWildGu(GameTestHelper helper) {
+        ServerPlayer player = survivalMock(helper, null, true);
+        ServerPlayerPatch patch = EpicFightCapabilities.getServerPlayerPatch(player);
+        helper.assertTrue(patch != null, "Epic Fight player patch missing");
+        SetTargetEvent hope = new SetTargetEvent(patch, helper.spawn(ModEntityTypes.HOPE_GU_ENTITY.get(), CENTER));
+        EpicFightEventHooks.Player.SET_TARGET.post(hope);
+        helper.assertTrue(hope.isCanceled(), "Hope Gu target was not canceled");
+        SetTargetEvent boar = new SetTargetEvent(patch,
+                helper.spawn(ModEntityTypes.WHITE_BOAR_GU_ENTITY.get(), CENTER));
+        EpicFightEventHooks.Player.SET_TARGET.post(boar);
+        helper.assertTrue(boar.isCanceled(), "boar Gu target was not canceled");
+        SetTargetEvent pig = new SetTargetEvent(patch, helper.spawn(EntityType.PIG, CENTER));
+        EpicFightEventHooks.Player.SET_TARGET.post(pig);
+        helper.assertTrue(!pig.isCanceled(), "ordinary mob target was canceled");
+        helper.succeed();
+    }
+    @GameTest(template = "empty9x9x9", timeoutTicks = 100)
+    public static void epicFightOnlyWaivesUndeadStamina(GameTestHelper helper) {
+        ServerPlayer player = survivalMock(helper, null, true);
+        ServerPlayerPatch patch = EpicFightCapabilities.getServerPlayerPatch(player);
+        helper.assertTrue(patch != null, "Epic Fight player patch missing");
+        helper.assertValueEqual(skillCost(patch, Skill.Resource.STAMINA), 5.0F, "living stamina cost changed");
+        BodyService.addPhysique(player, Physique.HALF_ZOMBIE);
+        helper.assertValueEqual(skillCost(patch, Skill.Resource.STAMINA), 0.0F, "half-zombie still pays stamina");
+        BodyService.addPhysique(player, Physique.ZOMBIE);
+        helper.assertValueEqual(skillCost(patch, Skill.Resource.STAMINA), 0.0F, "zombie still pays stamina");
+        helper.assertValueEqual(skillCost(patch, Skill.Resource.HEALTH), 5.0F, "non-stamina cost was waived");
+        helper.succeed();
+    }
+    private static float skillCost(ServerPlayerPatch patch, Skill.Resource resource) {
+        SkillConsumeEvent event = new SkillConsumeEvent(patch, EpicFightSkills.STEP.get(), resource, 5.0F,
+                new CompoundTag());
+        EpicFightEventHooks.Player.CONSUME_SKILL.post(event);
+        return event.getAmount();
     }
     private static List<InfoModel.ApertureIndex> titles(ServerPlayer player) {
         return InfoModel.aperture(player).stream().map(InfoModel.Row::entry)

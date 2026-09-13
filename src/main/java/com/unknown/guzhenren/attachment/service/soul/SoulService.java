@@ -1,5 +1,6 @@
 package com.unknown.guzhenren.attachment.service.soul;
 
+import com.google.common.math.LongMath;
 import com.unknown.guzhenren.attachment.data.soul.SoulData;
 import com.unknown.guzhenren.registry.attachment.ModAttachments;
 import net.minecraft.server.level.ServerPlayer;
@@ -28,9 +29,13 @@ public final class SoulService {
     private SoulService() {}
     public static @NotNull SoulData get(@NotNull Player player) {return player.getData(ModAttachments.SOUL);}
     public static void setMax(@NotNull ServerPlayer p, long v) {store(p, get(p).withMaxSoul(v));}
-    public static void addMax(@NotNull ServerPlayer p, long delta) {setMax(p, get(p).maxSoul() + delta);}
+    public static void addMax(@NotNull ServerPlayer p, long delta) {
+        setMax(p, LongMath.saturatedAdd(get(p).maxSoul(), delta));
+    }
     public static void setCurrent(@NotNull ServerPlayer p, long v) {store(p, get(p).withCurrentSoul(v));}
-    public static void addCurrent(@NotNull ServerPlayer p, long delta) {setCurrent(p, get(p).currentSoul() + delta);}
+    public static void addCurrent(@NotNull ServerPlayer p, long delta) {
+        setCurrent(p, LongMath.saturatedAdd(get(p).currentSoul(), delta));
+    }
     public static void refill(@NotNull ServerPlayer p) {store(p, get(p).refilled());}
     public static void revive(@NotNull ServerPlayer p) {store(p, get(p).revived());}
     private static void store(ServerPlayer p, SoulData data) {p.setData(ModAttachments.SOUL, data);}

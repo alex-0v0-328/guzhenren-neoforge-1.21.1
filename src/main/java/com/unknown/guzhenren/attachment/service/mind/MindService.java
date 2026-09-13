@@ -1,5 +1,6 @@
 package com.unknown.guzhenren.attachment.service.mind;
 
+import com.google.common.math.LongMath;
 import com.unknown.guzhenren.Ticks;
 import com.unknown.guzhenren.attachment.data.mind.MindData;
 import com.unknown.guzhenren.attachment.data.mind.MindPool;
@@ -48,7 +49,8 @@ public final class MindService {
         return get(p).taggedThoughts().getOrDefault(tag, 0L);
     }
     public static long naturalThoughts(@NotNull Player p) {
-        long tagged = get(p).taggedThoughts().values().stream().mapToLong(Long::longValue).sum();
+        long tagged = 0L;
+        for (long amount : get(p).taggedThoughts().values()) tagged = LongMath.saturatedAdd(tagged, amount);
         return Math.max(0L, current(p, WisdomType.THOUGHTS) - tagged);
     }
     public static void setCurrent(@NotNull ServerPlayer p, @NotNull WisdomType t, long v) {
@@ -56,19 +58,21 @@ public final class MindService {
         set(p, t, pool.withCurrent(t.isBurstable() ? v : Math.min(v, pool.max())));
     }
     public static void addCurrent(@NotNull ServerPlayer p, @NotNull WisdomType t, long d) {
-        setCurrent(p, t, current(p, t) + d);
+        setCurrent(p, t, LongMath.saturatedAdd(current(p, t), d));
     }
     public static void addThoughts(@NotNull ServerPlayer p, long amount, @NotNull ThoughtTag tag) {
         if (amount <= 0L) return;
-        setCurrent(p, WisdomType.THOUGHTS, current(p, WisdomType.THOUGHTS) + amount);
+        setCurrent(p, WisdomType.THOUGHTS, LongMath.saturatedAdd(current(p, WisdomType.THOUGHTS), amount));
         if (tag != ThoughtTag.NATURAL) {
-            store(p, get(p).withTagged(tag, taggedAmount(p, tag) + amount));
+            store(p, get(p).withTagged(tag, LongMath.saturatedAdd(taggedAmount(p, tag), amount)));
         }
     }
     public static void setMax(@NotNull ServerPlayer p, @NotNull WisdomType t, long v) {
         set(p, t, pool(p, t).withMax(v));
     }
-    public static void addMax(@NotNull ServerPlayer p, @NotNull WisdomType t, long d) {setMax(p, t, max(p, t) + d);}
+    public static void addMax(@NotNull ServerPlayer p, @NotNull WisdomType t, long d) {
+        setMax(p, t, LongMath.saturatedAdd(max(p, t), d));
+    }
     public static void empty(@NotNull ServerPlayer p) {store(p, get(p).emptied());}
     private static void set(ServerPlayer p, WisdomType t, MindPool v) {store(p, get(p).with(t, v));}
     private static void store(ServerPlayer p, MindData d) {p.setData(ModAttachments.MIND, d);}
@@ -86,8 +90,8 @@ public final class MindService {
         MindPool thoughts = pool(player, WisdomType.THOUGHTS);
         if (thoughts.current() >= thoughts.max()) return;
 
-        long grown = thoughts.current()
-                + PathTimeFlowService.perStep(player, brilliance(player).getThoughtsPerSecond());
+        long grown = LongMath.saturatedAdd(thoughts.current(),
+                PathTimeFlowService.perStep(player, brilliance(player).getThoughtsPerSecond()));
         setCurrent(player, WisdomType.THOUGHTS, Math.min(grown, thoughts.max()));
     }
     public static void onSleepComplete(@NotNull ServerPlayer p) {

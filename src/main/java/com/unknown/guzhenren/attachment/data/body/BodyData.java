@@ -1,5 +1,6 @@
 package com.unknown.guzhenren.attachment.data.body;
 
+import com.google.common.math.LongMath;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
@@ -61,7 +62,7 @@ public record BodyData(
     public static final long RELAPSE_WINDOW_TICKS = 5L * Ticks.MINUTE;
     public static final BodyData DEFAULT = new BodyData(Set.of(), ExtremePhysique.NONE, Race.HUMAN,
             parts(DEFAULT_AGE), parts(DEFAULT_LIFESPAN), UNTRACKED, 0L, UNTRACKED, NO_ZOMBIE_TIER, UNTRACKED);
-    public static long parts(long years) {return years * PARTS_PER_YEAR;}
+    public static long parts(long years) {return LongMath.saturatedMultiply(years, PARTS_PER_YEAR);}
     private static final Codec<Set<Physique>> PHYSIQUES_CODEC = Physique.CODEC.listOf()
             .xmap(BodyData::normalizePhysiques, ArrayList::new);
     private static final Codec<BodyData> CURRENT_CODEC = RecordCodecBuilder.create(instance -> instance.group(
@@ -221,7 +222,8 @@ public record BodyData(
                 deathQiLifespanLost, halfZombieEndTick, zombieTier, v);
     }
     public BodyData lived(long parts, long billedTick) {
-        return new BodyData(physiques, extremePhysique, race, ageParts + parts, lifespanParts - parts,
+        return new BodyData(physiques, extremePhysique, race, LongMath.saturatedAdd(ageParts, parts),
+                LongMath.saturatedSubtract(lifespanParts, parts),
                 lastDayIndex, deathQiLifespanLost, halfZombieEndTick, zombieTier, billedTick);
     }
     private enum LegacyLifeForm implements StringRepresentable {

@@ -45,5 +45,7 @@ class PathTimeFlowServiceTest {
             assertEquals(100L * rate, PathTimeFlowService.perStep(rate, 100L), "rate " + rate);
             assertEquals(0.5D * rate, PathTimeFlowService.perStep(rate, 0.5D), 0.0D, "rate " + rate);
         }
+        assertEquals(Long.MAX_VALUE, PathTimeFlowService.perStep(2, Long.MAX_VALUE));
+        assertEquals(Long.MAX_VALUE, PathTimeFlowService.perStep(13, Long.MAX_VALUE / 2));
     }
 }

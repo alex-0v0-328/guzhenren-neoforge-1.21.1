@@ -16,6 +16,12 @@ import org.junit.jupiter.api.Test;
 class PathEntryTest {
 
     @Test
+    void totalMarksSaturateInsteadOfWrappingNegative() {
+        PathEntry entry = PathEntry.DEFAULT.withMark(MarkTag.NATURAL, Long.MAX_VALUE)
+                .withMark(MarkTag.RACE, 10L);
+        assertEquals(Long.MAX_VALUE, entry.markTotal());
+    }
+    @Test
     @DisplayName("the removed legacy field is discarded while attainment and Dao marks survive migration")
     void removedLegacyFieldIsDiscarded() {
         JsonObject legacy = JsonParser.parseString("""

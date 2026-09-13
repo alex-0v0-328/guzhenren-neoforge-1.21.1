@@ -1,5 +1,6 @@
 package com.unknown.guzhenren.attachment.service.body;
 
+import com.google.common.math.LongMath;
 import com.unknown.guzhenren.Ticks;
 import com.unknown.guzhenren.attachment.data.aperture.Aperture;
 import com.unknown.guzhenren.attachment.data.aperture.ApertureData;
@@ -13,6 +14,7 @@ import com.unknown.guzhenren.custom.enums.body.Race;
 import com.unknown.guzhenren.custom.enums.path.GuPath;
 import com.unknown.guzhenren.custom.enums.path.MarkTag;
 import com.unknown.guzhenren.registry.attachment.ModAttachments;
+import java.math.BigInteger;
 import java.util.EnumSet;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -62,10 +64,17 @@ public final class BodyService {
         store(p, get(p).withLifespanParts(BodyData.parts(years)));
     }
     public static void addAge(@NotNull ServerPlayer p, long years) {
-        store(p, get(p).withAgeParts(get(p).ageParts() + BodyData.parts(years)));
+        store(p, get(p).withAgeParts(clampParts(BigInteger.valueOf(get(p).ageParts()).add(yearParts(years)))));
     }
     public static void addLifespan(@NotNull ServerPlayer p, long years) {
-        store(p, get(p).withLifespanParts(get(p).lifespanParts() + BodyData.parts(years)));
+        store(p, get(p).withLifespanParts(clampParts(BigInteger.valueOf(get(p).lifespanParts()).add(yearParts(years)))));
+    }
+    private static BigInteger yearParts(long years) {
+        return BigInteger.valueOf(years).multiply(BigInteger.valueOf(BodyData.PARTS_PER_YEAR));
+    }
+    private static long clampParts(BigInteger parts) {
+        // Keep intermediate products exact: a later signed addition or fraction can bring them back into range.
+        return parts.max(BigInteger.valueOf(Long.MIN_VALUE)).min(BigInteger.valueOf(Long.MAX_VALUE)).longValue();
     }
     //endregion
 
@@ -182,15 +191,16 @@ public final class BodyService {
     //region Death Qi [死气] debt
     public static void drainByDeathQi(@NotNull ServerPlayer player, long years) {
         BodyData body = get(player);
-        store(player, body.withLifespanParts(body.lifespanParts() - BodyData.parts(years))
-                .withDeathQiLifespanLost(body.deathQiLifespanLost() + years));
+        store(player, body.withLifespanParts(clampParts(BigInteger.valueOf(body.lifespanParts()).subtract(yearParts(years))))
+                .withDeathQiLifespanLost(LongMath.saturatedAdd(body.deathQiLifespanLost(), years)));
     }
     public static double refundDeathQiDebt(@NotNull ServerPlayer player, int numerator, int denominator) {
         BodyData body = get(player);
-        long refundParts = BodyData.parts(body.deathQiLifespanLost()) * numerator / denominator;
-        store(player, body.withLifespanParts(body.lifespanParts() + refundParts)
+        BigInteger refundParts = yearParts(body.deathQiLifespanLost()).multiply(BigInteger.valueOf(numerator))
+                .divide(BigInteger.valueOf(denominator));
+        store(player, body.withLifespanParts(clampParts(BigInteger.valueOf(body.lifespanParts()).add(refundParts)))
                 .withDeathQiLifespanLost(0L));
-        return (double) refundParts / BodyData.PARTS_PER_YEAR;
+        return refundParts.doubleValue() / BodyData.PARTS_PER_YEAR;
     }
     public static void clearDeathQiDebt(@NotNull ServerPlayer p) {store(p, get(p).withDeathQiLifespanLost(0L));}
     //endregion
@@ -247,7 +257,7 @@ public final class BodyService {
      * means FASTER. Hand-rolling the rate here once made it run backwards, into a pure longevity buff.
      */
     public static long elapsedParts(long elapsedTicks) {
-        return Math.max(0L, elapsedTicks) * BodyData.PARTS_PER_TICK;
+        return LongMath.saturatedMultiply(Math.max(0L, elapsedTicks), BodyData.PARTS_PER_TICK);
     }
     //endregion
 }

@@ -1,5 +1,6 @@
 package com.unknown.guzhenren.command;
 
+import com.google.common.math.LongMath;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.LongArgumentType;
 import com.mojang.brigadier.builder.ArgumentBuilder;
@@ -75,7 +76,7 @@ public final class ModCommandSupport {
         return Commands.literal(literal)
                 .then(longNode("set", set))
                 .then(longNode("add", add))
-                .then(longNode("sub", (player, value) -> add.apply(player, -value)));
+                .then(longNode("sub", (player, value) -> add.apply(player, LongMath.saturatedSubtract(0L, value))));
     }
     public static <E extends Enum<E> & StringRepresentable> ArgumentBuilder<CommandSourceStack, ?> enumSetNode(
             String literal, E[] values, EnumOperation<E> operation,

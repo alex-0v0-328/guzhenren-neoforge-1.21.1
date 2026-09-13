@@ -1,5 +1,6 @@
 package com.unknown.guzhenren.attachment.service.aperture;
 
+import com.google.common.math.LongMath;
 import com.unknown.guzhenren.Ticks;
 import com.unknown.guzhenren.attachment.data.aperture.Aperture;
 import com.unknown.guzhenren.attachment.data.aperture.ApertureData;
@@ -89,7 +90,9 @@ public final class ApertureEssenceService {
             ApertureService.set(player, i, data.get(i).refilled());
         }
     }
-    public static void addDistilled(@NotNull ServerPlayer p, long d) {setDistilled(p, distilledEssence(p) + d);}
+    public static void addDistilled(@NotNull ServerPlayer p, long d) {
+        setDistilled(p, LongMath.saturatedAdd(distilledEssence(p), d));
+    }
     public static void setDistilled(@NotNull ServerPlayer p, long v) {setDistilled(p, ApertureService.PRIMARY, v);}
     public static void setDistilled(@NotNull ServerPlayer player, int index, long value) {
         ApertureService.set(player, index,

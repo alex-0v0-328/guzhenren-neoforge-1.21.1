@@ -1,5 +1,6 @@
 package com.unknown.guzhenren.attachment.service.path;
 
+import com.google.common.math.LongMath;
 import com.unknown.guzhenren.Ticks;
 import com.unknown.guzhenren.attachment.data.path.PathQiData;
 import com.unknown.guzhenren.attachment.data.path.PathQiEntry;
@@ -20,8 +21,8 @@ import org.jetbrains.annotations.NotNull;
  * <p>⚠ Those effects are a PROJECTION, never the truth -- the heartbeat rebuilds them, so milk and
  * {@code /effect clear} cannot cure Death Qi [死气]. ⚠ {@code set} re-anchors the hold on the SUM,
  * never "takes the higher grade" and never refuses -- death qi accumulates like every other kind. ⚠
- * The graded syncs compute the tier off the CURRENT amount, so a kind past its hold reads a lower-tier
- * effect while decaying ({@code TODO(decay)} wants NO effect while decaying).
+ * The graded syncs compute the tier off the CURRENT amount only while the kind is holding; an expired
+ * kind has no projected effect.
  *
  * @author Alex
  * @version 1.0.0
@@ -37,7 +38,7 @@ public final class PathQiService {
     public static @NotNull PathQiData get(@NotNull Player p) {return p.getData(ModAttachments.QI);}
     public static long current(@NotNull Player p, @NotNull QiKind kind) {return get(p).current(kind, now(p));}
     public static void add(@NotNull ServerPlayer p, @NotNull QiKind kind, long delta) {
-        set(p, kind, current(p, kind) + delta);
+        set(p, kind, LongMath.saturatedAdd(current(p, kind), delta));
     }
     public static void set(@NotNull ServerPlayer p, @NotNull QiKind kind, long value) {
         long amount = Math.max(0L, value);
@@ -60,7 +61,6 @@ public final class PathQiService {
         syncEffects(p);
     }
     //region effect projection -- the store is the truth, the MobEffect is its display
-    //    TODO(decay): a kind past its hold reads NO effect while decaying -- per-tier falloff is his short-term TODO.
     public static void syncEffects(@NotNull ServerPlayer player) {
         long now = now(player);
         syncGraded(player, QiKind.STRENGTH, ModEffects.STRENGTH_QI, now);

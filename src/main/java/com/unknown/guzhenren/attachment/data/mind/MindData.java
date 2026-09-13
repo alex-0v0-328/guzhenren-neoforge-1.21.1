@@ -7,6 +7,7 @@ import com.unknown.guzhenren.custom.enums.wisdom.ThoughtTag;
 import com.unknown.guzhenren.custom.enums.wisdom.WisdomType;
 import com.unknown.guzhenren.serialization.ModStreamCodecs;
 import io.netty.buffer.ByteBuf;
+import java.math.BigInteger;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.Map;
@@ -53,14 +54,21 @@ public record MindData(Brilliance brilliance, Map<WisdomType, MindPool> pools, M
         pools = Collections.unmodifiableMap(dense);
 
         Map<ThoughtTag, Long> tagDense = new EnumMap<>(ThoughtTag.class);
-        tagDense.putAll(taggedThoughts);
-        tagDense.remove(ThoughtTag.NATURAL);
+        for (Map.Entry<ThoughtTag, Long> entry : taggedThoughts.entrySet()) {
+            ThoughtTag tag = entry.getKey();
+            Long amount = entry.getValue();
+            if (tag != null && tag != ThoughtTag.NATURAL && amount != null && amount > 0L) {
+                tagDense.put(tag, amount);
+            }
+        }
         long thoughtsCurrent = dense.get(WisdomType.THOUGHTS).current();
-        long sum = tagDense.values().stream().mapToLong(Long::longValue).sum();
-        if (sum > thoughtsCurrent) {
+        BigInteger sum = BigInteger.ZERO;
+        for (long amount : tagDense.values()) sum = sum.add(BigInteger.valueOf(amount));
+        if (sum.compareTo(BigInteger.valueOf(thoughtsCurrent)) > 0) {
             Map<ThoughtTag, Long> scaled = new EnumMap<>(ThoughtTag.class);
             for (Map.Entry<ThoughtTag, Long> entry : tagDense.entrySet()) {
-                long kept = entry.getValue() * thoughtsCurrent / sum;
+                long kept = BigInteger.valueOf(entry.getValue()).multiply(BigInteger.valueOf(thoughtsCurrent))
+                        .divide(sum).longValue();
                 if (kept > 0L) scaled.put(entry.getKey(), kept);
             }
             tagDense = scaled;
