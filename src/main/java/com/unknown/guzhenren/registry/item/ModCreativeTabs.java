@@ -1,6 +1,7 @@
 package com.unknown.guzhenren.registry.item;
 
 import com.unknown.guzhenren.Guzhenren;
+import com.unknown.guzhenren.block.SpiritSpringBlock;
 import com.unknown.guzhenren.custom.enums.path.GuPath;
 import com.unknown.guzhenren.item.gu.MortalGuItem;
 import com.unknown.guzhenren.item.material.GuMaterialItem;
@@ -9,6 +10,7 @@ import java.util.function.Supplier;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -22,7 +24,8 @@ import static com.unknown.guzhenren.custom.enums.path.GuPath.STRENGTH;
  * <p>DeferredRegister holder: three tabs ({@code mortal_gu}, {@code gu_material},
  * {@code strength_mortal_gu}), populated by predicates over {@link MortalGuItem},
  * {@link GuMaterialItem}, and {@link GuPath#STRENGTH}. An item extending neither middle class lands in
- * no tab at all.
+ * no tab at all -- except the Spirit Spring [元泉] BlockItem, routed into the material tab
+ * explicitly.
  *
  * <p>⚠ That miss is silent: nothing fails and nothing warns, the item simply never appears. The three
  * tab constants stay unused by the language provider (it has no creative-tab overload).
@@ -52,7 +55,7 @@ public final class ModCreativeTabs {
                     .title(Component.translatable("itemGroup.guzhenren.gu_material"))
                     .icon(() -> new ItemStack(ModItems.PRIMEVAL_STONE.get()))
                     .withTabsBefore(EPIC_FIGHT_ITEMS)
-                    .displayItems((parameters, output) -> accept(output, GuMaterialItem.class::isInstance))
+                    .displayItems((parameters, output) -> accept(output, ModCreativeTabs::belongsInGuMaterial))
                     .build());
     public static final Supplier<CreativeModeTab> STRENGTH_MORTAL_GU = CREATIVE_MODE_TABS.register(
             "strength_mortal_gu", () -> CreativeModeTab.builder()
@@ -69,6 +72,10 @@ public final class ModCreativeTabs {
         }
     }
     static boolean belongsInMortalGu(Item item) {return item instanceof MortalGuItem gu && gu.path() != STRENGTH;}
+    static boolean belongsInGuMaterial(Item item) {
+        return GuMaterialItem.class.isInstance(item)
+                || item instanceof BlockItem blockItem && blockItem.getBlock() instanceof SpiritSpringBlock;
+    }
     public static void register(IEventBus modEventBus) {
         CREATIVE_MODE_TABS.register(modEventBus);
     }

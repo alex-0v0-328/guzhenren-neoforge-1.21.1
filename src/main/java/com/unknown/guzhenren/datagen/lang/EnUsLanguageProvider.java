@@ -23,6 +23,7 @@ import com.unknown.guzhenren.custom.enums.strength.StrengthPathBranch;
 import com.unknown.guzhenren.custom.enums.wisdom.Brilliance;
 import com.unknown.guzhenren.custom.enums.wisdom.ThoughtTag;
 import com.unknown.guzhenren.custom.enums.wisdom.WisdomType;
+import com.unknown.guzhenren.registry.block.ModBlocks;
 import com.unknown.guzhenren.registry.item.ModItems;
 import net.minecraft.data.PackOutput;
 import net.neoforged.neoforge.common.data.LanguageProvider;
@@ -364,6 +365,8 @@ public class EnUsLanguageProvider extends LanguageProvider {
         addItem(ModItems.SWEET_LIQUOR, "Sweet Liquor");
         addItem(ModItems.BITTER_LIQUOR, "Bitter Liquor");
         addItem(ModItems.SPICY_LIQUOR, "Spicy Liquor");
+        // One entry names the block, its BlockItem and the fluid type (shared description id).
+        addBlock(ModBlocks.SPIRIT_SPRING, "Spirit Spring");
 
         addItem(ModItems.SWORD_QI_1, "Sword Qi I");
         addItem(ModItems.SWORD_QI_2, "Sword Qi II");

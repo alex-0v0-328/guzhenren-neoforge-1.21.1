@@ -18,9 +18,12 @@ import com.unknown.guzhenren.item.gu.MortalGuItem;
 import com.unknown.guzhenren.network.payload.DashPayload;
 import com.unknown.guzhenren.registry.effect.ModEffects;
 import com.unknown.guzhenren.registry.entity.ModEntityTypes;
+import com.unknown.guzhenren.registry.fluid.ModFluids;
 import com.unknown.guzhenren.registry.menu.ModMenus;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.renderer.ItemBlockRenderTypes;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.NoopRenderer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
@@ -28,6 +31,7 @@ import net.minecraft.world.item.ItemStack;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
@@ -50,7 +54,8 @@ import yesman.epicfight.world.capabilities.EpicFightCapabilities;
  * screens for the two containers, fixed-texture renderers sharing each Gu family's GeckoLib model,
  * and the wild boar's cutout GeckoLib model,
  * and the Hope Gu [希望蛊] entity as a
- * {@link net.minecraft.client.renderer.entity.NoopRenderer} (pure particles, no model).
+ * {@link net.minecraft.client.renderer.entity.NoopRenderer} (pure particles, no model), plus the
+ * Spirit Spring fluid's translucent render layer.
  *
  * @author Alex
  * @version 1.0.0
@@ -86,6 +91,13 @@ public final class ClientEvents {
         event.registerAbove(VanillaGuiLayers.HOTBAR, PLAYER_STATS, PlayerStatsHud.INSTANCE);
         event.registerAbove(VanillaGuiLayers.AIR_LEVEL, CHARGE, ChargeHud.INSTANCE);
         event.registerAbove(VanillaGuiLayers.AIR_LEVEL, NOURISH, NourishHud.INSTANCE);
+    }
+    @SubscribeEvent
+    public static void onClientSetup(FMLClientSetupEvent event) {
+        event.enqueueWork(() -> {
+            ItemBlockRenderTypes.setRenderLayer(ModFluids.SPIRIT_SPRING.get(), RenderType.translucent());
+            ItemBlockRenderTypes.setRenderLayer(ModFluids.FLOWING_SPIRIT_SPRING.get(), RenderType.translucent());
+        });
     }
     @SubscribeEvent
     public static void onRegisterKeyMappings(RegisterKeyMappingsEvent event) {

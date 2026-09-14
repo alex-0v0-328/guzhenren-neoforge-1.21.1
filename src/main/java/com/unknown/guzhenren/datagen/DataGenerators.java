@@ -2,6 +2,7 @@ package com.unknown.guzhenren.datagen;
 
 import com.unknown.guzhenren.Guzhenren;
 import com.unknown.guzhenren.datagen.advancement.ModAdvancementProvider;
+import com.unknown.guzhenren.datagen.block.ModBlockStateProvider;
 import com.unknown.guzhenren.datagen.curios.ModCuriosProvider;
 import com.unknown.guzhenren.datagen.damage.ModDamageTypeTagsProvider;
 import com.unknown.guzhenren.datagen.item.ModItemModelProvider;
@@ -54,6 +55,8 @@ public final class DataGenerators {
         generator.addProvider(event.includeClient(), new ZhCnLanguageProvider(packOutput));
 
         generator.addProvider(event.includeClient(), new ModItemModelProvider(packOutput, existingFileHelper));
+
+        generator.addProvider(event.includeClient(), new ModBlockStateProvider(packOutput, existingFileHelper));
 
         ModDatapackProvider datapackProvider = generator.addProvider(event.includeServer(),
                 new ModDatapackProvider(packOutput, lookupProvider));

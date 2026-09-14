@@ -329,7 +329,8 @@ class WikiConsistencyTest {
                 group("分组", "酒", "liquor sour_liquor sweet_liquor bitter_liquor spicy_liquor"),
                 group("分组", "气道蛊材", ladder("sword_qi_", 1, 5) + " " + ladder("strength_qi_", 1, 5)
                         + " " + ladder("life_qi_", 1, 5) + " " + ladder("essence_qi_", 1, 5) + " death_qi_5"),
-                group("分组", "人窍", ladder("human_aperture_", 1, 5)));
+                group("分组", "人窍", ladder("human_aperture_", 1, 5)),
+                group("分组", "元泉", "spirit_spring"));
     }
     private record Group(String table, String label, List<String> ids) {
 

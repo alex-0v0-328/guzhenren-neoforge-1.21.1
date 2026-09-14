@@ -39,7 +39,9 @@ import com.unknown.guzhenren.item.material.PrimevalStoneItem;
 import com.unknown.guzhenren.item.material.qi.DeathQiItem;
 import com.unknown.guzhenren.item.material.qi.LifeQiItem;
 import com.unknown.guzhenren.item.material.qi.QiMaterialItem;
+import com.unknown.guzhenren.registry.block.ModBlocks;
 import com.unknown.guzhenren.registry.effect.ModEffects;
+import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredItem;
@@ -457,6 +459,10 @@ public final class ModItems {
             () -> new LiquorItem(new Item.Properties()));
     public static final DeferredItem<Item> SPICY_LIQUOR = ITEMS.register("spicy_liquor",
             () -> new LiquorItem(new Item.Properties()));
+    // The spring's BlockItem: same key as the block, answers to the block's lang entry, and its
+    // icon is the fluid's still strip (see ModItemModelProvider) -- no item PNG of its own.
+    public static final DeferredItem<Item> SPIRIT_SPRING = ITEMS.register("spirit_spring",
+            () -> new BlockItem(ModBlocks.SPIRIT_SPRING.get(), new Item.Properties()));
     //endregion
 
     //region 人窍 [Human Aperture] -- pure gu material, ranks I..V; a wiped death drops one per aperture

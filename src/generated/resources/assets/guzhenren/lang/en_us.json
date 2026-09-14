@@ -1,6 +1,7 @@
 {
   "advancements.guzhenren.first_awakening.description": "Use your first Hope Gu to open your first aperture",
   "advancements.guzhenren.first_awakening.title": "Awakening!",
+  "block.guzhenren.spirit_spring": "Spirit Spring",
   "death.attack.guzhenren.aperture_pressure_explosion": "%1$s died in an aperture pressure explosion",
   "death.attack.guzhenren.lifespan_exhausted": "%1$s ran out of lifespan",
   "death.attack.guzhenren.mind_ocean_shattered": "%1$s shattered their Mind Ocean",

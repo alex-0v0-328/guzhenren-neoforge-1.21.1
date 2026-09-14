@@ -25,8 +25,8 @@ import net.neoforged.neoforge.event.entity.RegisterSpawnPlacementsEvent;
  * <p>Hope Gu registers {@link com.unknown.guzhenren.entity.FlyingGuEntity}'s attributes; the boar Gu and
  * rhinoceros beetle Gu variants share them with the raised resting flying speed
  * ({@code RESTING_GU_FLYING_SPEED}). Flying Gu families use one surface spawn placement, while the wild boar
- * mirrors {@link net.minecraft.world.entity.animal.Animal#checkAnimalSpawnRules} so it needs a grass block and
- * animal-appropriate light. The flying placement uses
+ * spawns on animal-spawnable ground with animal-appropriate light, via the hand-written predicate below
+ * ({@code BlockTags.ANIMALS_SPAWNABLE_ON} underfoot, raw brightness above 8). The flying placement uses
  * {@link net.minecraft.world.level.levelgen.Heightmap.Types#MOTION_BLOCKING_NO_LEAVES} and a custom check that
  * requires {@code pos.getY() >= level.getSeaLevel()} — NOT {@code canSeeSky}, because leaves count as cover
  * and would empty every forest floor.

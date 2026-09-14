@@ -1,8 +1,10 @@
 package com.unknown.guzhenren;
 
+import com.unknown.guzhenren.client.fluid.SpiritSpringClientExtensions;
 import com.unknown.guzhenren.client.icon.GradedEffectIcon;
 import com.unknown.guzhenren.client.icon.ItemEffectIcon;
 import com.unknown.guzhenren.registry.effect.ModEffects;
+import com.unknown.guzhenren.registry.fluid.ModFluidTypes;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
@@ -13,8 +15,9 @@ import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsE
  * Client-only entry point, so that nothing which would crash a dedicated server sits in {@link Guzhenren}.
  *
  * <p>Annotated {@code @Mod(dist = Dist.CLIENT)}. It registers every MobEffect's client extension --
- * the effect icons -- on the mod bus; all other client-side event subscribers live under the
- * {@code client/} package tree and are loaded only on the client.
+ * the effect icons -- plus the Spirit Spring's fluid rendering on the mod bus; all other
+ * client-side event subscribers live under the {@code client/} package tree and are loaded only on
+ * the client.
  *
  * @author Alex
  * @version 1.0.0
@@ -44,5 +47,6 @@ public class GuzhenrenClient {
         event.registerMobEffect(GradedEffectIcon.item("charging_crash_gu", 4, 5), ModEffects.CHARGING_CRASH_GU);
         event.registerMobEffect(new ItemEffectIcon("second_watch_gu"), ModEffects.SECOND_WATCH_GU);
         event.registerMobEffect(new ItemEffectIcon("third_watch_gu"), ModEffects.THIRD_WATCH_GU);
+        event.registerFluidType(new SpiritSpringClientExtensions(), ModFluidTypes.SPIRIT_SPRING.get());
     }
 }

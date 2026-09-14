@@ -23,6 +23,7 @@ import com.unknown.guzhenren.custom.enums.strength.StrengthPathBranch;
 import com.unknown.guzhenren.custom.enums.wisdom.Brilliance;
 import com.unknown.guzhenren.custom.enums.wisdom.ThoughtTag;
 import com.unknown.guzhenren.custom.enums.wisdom.WisdomType;
+import com.unknown.guzhenren.registry.block.ModBlocks;
 import com.unknown.guzhenren.registry.item.ModItems;
 import net.minecraft.data.PackOutput;
 import net.neoforged.neoforge.common.data.LanguageProvider;
@@ -367,6 +368,8 @@ public class ZhCnLanguageProvider extends LanguageProvider {
         addItem(ModItems.SWEET_LIQUOR, "甜酒");
         addItem(ModItems.BITTER_LIQUOR, "苦酒");
         addItem(ModItems.SPICY_LIQUOR, "辣酒");
+        // 一条键名同时覆盖方块、方块物品与流体类型（共享 description id）。
+        addBlock(ModBlocks.SPIRIT_SPRING, "元泉");
 
         addItem(ModItems.SWORD_QI_1, "一转剑气");
         addItem(ModItems.SWORD_QI_2, "二转剑气");

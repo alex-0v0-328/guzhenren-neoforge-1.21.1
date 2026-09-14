@@ -15,6 +15,7 @@ import com.unknown.guzhenren.attachment.service.mind.MindService;
 import com.unknown.guzhenren.attachment.service.path.PathQiService;
 import com.unknown.guzhenren.attachment.service.path.PathService;
 import com.unknown.guzhenren.attachment.service.soul.SoulService;
+import com.unknown.guzhenren.block.SpiritSpringBlock;
 import com.unknown.guzhenren.custom.enums.aperture.Rank;
 import com.unknown.guzhenren.custom.enums.body.ExtremePhysique;
 import com.unknown.guzhenren.custom.enums.body.Physique;
@@ -28,7 +29,9 @@ import com.unknown.guzhenren.item.gu.RefinedGuState;
 import com.unknown.guzhenren.item.gu.TendedGuItem;
 import com.unknown.guzhenren.menu.ApertureStorageMenu;
 import com.unknown.guzhenren.registry.attachment.ModAttachments;
+import com.unknown.guzhenren.registry.block.ModBlocks;
 import com.unknown.guzhenren.registry.entity.ModEntityTypes;
+import com.unknown.guzhenren.registry.fluid.ModFluids;
 import com.unknown.guzhenren.registry.item.ModDataComponents;
 import com.unknown.guzhenren.registry.item.ModItems;
 import io.netty.channel.embedded.EmbeddedChannel;
@@ -86,6 +89,39 @@ public final class ModGameTests {
     private static final String HUNGRY_KEY = "guzhenren.item.gu.hungry";
     private static final String STARVED_KEY = "guzhenren.item.gu.starved";
     private ModGameTests() {}
+
+    @GameTest(template = "empty9x9x9", timeoutTicks = 200)
+    public static void spiritSpringFlowsBetweenSourcesWithoutMintingNewOnes(GameTestHelper helper) {
+        BlockPos middle = CENTER;
+        // A closed trough -- stone everywhere at spring height except the three trough cells -- so
+        // the gap is the only place the fluid can go; water skips flat cells when a ledge is nearer.
+        for (int x = -3; x <= 3; x++) {
+            for (int z = -2; z <= 2; z++) {
+                helper.setBlock(middle.offset(x, -1, z), Blocks.STONE);
+                boolean trough = z == 0 && x >= -1 && x <= 1;
+                if (!trough) helper.setBlock(middle.offset(x, 0, z), Blocks.STONE);
+            }
+        }
+        helper.setBlock(middle.offset(-1, 0, 0), ModBlocks.SPIRIT_SPRING.get());
+        helper.setBlock(middle.offset(1, 0, 0), ModBlocks.SPIRIT_SPRING.get());
+        helper.succeedWhen(() -> helper.assertBlockState(middle,
+                state -> state.getFluidState().getType() == ModFluids.FLOWING_SPIRIT_SPRING.get()
+                        && !state.getFluidState().isSource(),
+                () -> "the gap must fill with the flowing arm, never a new source, but is "
+                        + helper.getLevel().getBlockState(helper.absolutePos(middle))));
+    }
+
+    @GameTest(template = "empty9x9x9", timeoutTicks = 600)
+    public static void spiritSpringProducesPrimevalStonesUpToTheCap(GameTestHelper helper) {
+        BlockPos spring = CENTER;
+        helper.setBlock(spring.below(), Blocks.STONE);
+        helper.setBlock(spring, ModBlocks.SPIRIT_SPRING.get());
+        helper.succeedWhen(() -> {
+            int stones = SpiritSpringBlock.nearbyStones(helper.getLevel(), helper.absolutePos(spring));
+            helper.assertTrue(stones >= SpiritSpringBlock.STONES_PER_PRODUCTION, "first batch of stones spawned");
+            helper.assertTrue(stones <= SpiritSpringBlock.NEARBY_STONES_CAP, "the cap pauses further batches");
+        });
+    }
     @GameTest(template = "empty9x9x9", timeoutTicks = 100)
     public static void bodyAndDistilledEssenceAdditionsDoNotWrap(GameTestHelper helper) {
         ServerPlayer player = storagePlayer(helper);
