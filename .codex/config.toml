@@ -1,0 +1,63 @@
+# GZR-only Codex overrides. Keep credentials in the user environment, never here.
+
+[mcp_servers.jetbrains]
+url = "http://127.0.0.1:64342/stream"
+enabled = true
+required = false
+startup_timeout_sec = 10
+tool_timeout_sec = 60
+
+[mcp_servers.context7]
+url = "https://mcp.context7.com/mcp"
+bearer_token_env_var = "CODEX_CONTEXT7_API_KEY"
+enabled = true
+required = false
+enabled_tools = ["resolve-library-id", "query-docs"]
+
+[mcp_servers.serena]
+enabled = false
+
+[mcp_servers.node_repl]
+enabled = false
+
+[plugins."codex-app-tools@openai-bundled"]
+enabled = true
+
+[plugins."codex-app-tools@openai-bundled".mcp_servers.codex_app]
+enabled = true
+
+[plugins."github@openai-curated-remote"]
+enabled = true
+
+[plugins."context7@context7-marketplace"]
+enabled = true
+
+[plugins."context7@context7-marketplace".mcp_servers.context7]
+enabled = false
+
+[plugins."browser@openai-bundled"]
+enabled = false
+
+[plugins."chrome@openai-bundled"]
+enabled = false
+
+[plugins."unified-computer-use@openai-bundled"]
+enabled = false
+
+[plugins."visualize@openai-bundled"]
+enabled = false
+
+[plugins."documents@openai-primary-runtime"]
+enabled = false
+
+[plugins."pdf@openai-primary-runtime"]
+enabled = false
+
+[plugins."spreadsheets@openai-primary-runtime"]
+enabled = false
+
+[plugins."presentations@openai-primary-runtime"]
+enabled = false
+
+[plugins."template-creator@openai-primary-runtime"]
+enabled = false
