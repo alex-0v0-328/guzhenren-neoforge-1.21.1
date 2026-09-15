@@ -198,14 +198,14 @@ tasks.named('test', Test) {
         // fails on a blank one, so an explicit -PwikiDir= must stay non-null.
         systemProperty 'gzr.wikiDir', configuredWikiDir
         if (!configuredWikiDir.isBlank()) {
-            def vaultRoot = file(configuredWikiDir)
-            systemProperty 'gzr.wikiDir', vaultRoot.absolutePath
+            def wikiRoot = file(configuredWikiDir)
+            systemProperty 'gzr.wikiDir', wikiRoot.absolutePath
             inputs.files([
                     '玩家向/蛊真人MOD 1.0.0 蛊材&蛊虫.md',
                     '玩家向/蛊真人MOD 1.0.0 空窍&肉体&脑海&魂魄.md',
                     '玩家向/蛊真人MOD 1.0.0 时间与时间戳总表.md',
                     '开发向/工程/测试集.md'
-            ].collect { new File(vaultRoot, it) })
+            ].collect { new File(wikiRoot, it) })
             inputs.files(fileTree('src/pureTest/java'), fileTree('src/test/java'),
                     fileTree('src/main/java/com/unknown/guzhenren/gametest'))
         }
