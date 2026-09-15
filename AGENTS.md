@@ -61,14 +61,15 @@ Exceptions (format yields to the task): `explain`-type requests get the full wal
 
 ## 3. Map
 
-| Path                      | What it is                                                                          |
-|---------------------------|-------------------------------------------------------------------------------------|
-| `./`                      | Main mod, id `guzhenren`, and the only Git repo                                     |
-| `../project-wiki/开发向/` | Attached design wiki, entry 《蛊 模组设定 MOC》                                     |
-| `../project-wiki/玩家向/` | Attached player snapshot; 《时间与时间戳总表》《TODO总表》 are the closeout indexes |
-| `../assets/textures/`     | Alex's art staging; intentionally not attached to the Codex project                 |
-| `../assets/test modpack/` | Old modpack mirror; attach only for a task that actually needs it, then remove it   |
-| `tools/gen_template.py`   | Regenerates the GameTest `empty9x9x9.nbt` scenario template                         |
+| Path                                | What it is                                                                                           |
+|-------------------------------------|------------------------------------------------------------------------------------------------------|
+| `./`                                | Main mod, id `guzhenren`, and the only Git repo                                                      |
+| `../project-wiki/开发向/`           | Attached design wiki, entry 《蛊 模组设定 MOC》                                                      |
+| `../project-wiki/玩家向/`           | Attached player snapshot; 《时间与时间戳总表》《TODO总表》 are the closeout indexes                  |
+| `../assets/textures/`               | Alex's art staging; intentionally not attached to the Codex project                                  |
+| `../assets/test modpack/`           | Old modpack mirror; attach only for a task that actually needs it, then remove it                    |
+| `tools/gen_template.py`             | Regenerates the GameTest `empty9x9x9.nbt` scenario template                                          |
+| `tools/export_rhinoceros_beetle.py` | Converts the blockbench `.bbmodel` into the beetle's GeckoLib model/animation files (test alongside) |
 
 Obsidian note: files named like their title don't repeat that title as an H1 in the body. Wiki documents describe the present; version snapshots, undecided designs and rejected-idea records are anti-regression history — keep them.
 
@@ -117,8 +118,8 @@ Chat in Chinese; code, comments and commit messages in American English. Terms c
 ## 6. State
 
 - Spirit spring (元泉, `spirit_spring`) first version committed and pushed: `3dce895`, 28 files. Texture is a tinted vanilla-water placeholder awaiting Alex's #4FC3F7 pass; design notes in 《蛊虫 与蛊材》.
-- Pre-existing uncommitted WIP: `build.gradle` renames the legacy variable `vaultRoot`→`wikiRoot` (L2 green including the 6 wiki checks after the rename). Preserve this diff independently of the untracked Codex migration files added on 2026-09-14.
+- The 2026-09-14/15 WIP batch (build.gradle `wikiRoot` rename, GameTest template generator, rules-entry move, Codex tooling migration, `.zcode` gitignore) landed as commits `1357c0f`..`28e3950`.
 - 2026-09-14 rules pass: a dead side mod (zero-connected, references verified clean) was deleted along with its wiki pages; this file was rewritten in English and moved into the main repository as the self-contained rules entry; the reference was slimmed; wiki rewrite batch 0..1 ran (MOC and the two player indexes restyled); the parent `README.md` was added.
-- 2026-09-15 ZCode root migration: ZCode now opens this repository directly (matching Codex). `.zcode/` is gitignored and its 23 plan files were copied in from the parent workspace; the parent `AGENTS.md` redirect and old `.zcode/` stay as a dormant archive; ZCode memories were cloned to the new path key `guzhenren-template-1.21.1-f9ea652aa9d18197`.
+- 2026-09-15 ZCode root migration + deep clean (Alex signed off): ZCode now opens this repository directly (matching Codex); `.zcode/` is gitignored and its plan archive was emptied. Parent-workspace dead weight removed — the `AGENTS.md` redirect, old `.zcode/` and `.opencode/`, and a stale 1.8 GB `.gradle-user-home`. ZCode memories live only under path key `guzhenren-template-1.21.1-f9ea652aa9d18197` (three stale keys deleted after a byte-identical clone check; hashed Temp backup `gzr-deepclean-20260915`). Repo leftovers `.superpowers/`, `bin/`, `.eclipse/` and `tools/__pycache__/` removed as well.
 - Codex project tools: JetBrains MCP is the optional Java semantic service; Context7 uses the Codex-only user environment credential; Serena and node_repl are disabled by `.codex/config.toml`. Project plugin preferences disable unrelated local/bundled plugins when the current runtime recognizes them. Plugin-injected services and workspace-managed remote plugins cannot all be overridden per project, so leave their global state untouched and invoke them only when the task actually matches. A fresh Codex subprocess on 2026-09-15 verified Context7 `resolve-library-id` and `query-docs`; JetBrains remains optional and was offline because IDEA's port was not listening. ZCode's separate Serena, JetBrains and Context7 configuration is unchanged. The dead global codegraph entry stays disabled.
 - Awaiting Alex: 元泉 transparency experiment via `runClient` (verdict rule in 《蛊虫 与蛊材》); final texture, underwater fog, water feel, stone-gen pacing; wild boar/beetle acceptance per player TODO. Remaining wiki files restyle in later batches — the batch list lives in the MOC.
