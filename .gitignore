@@ -45,6 +45,9 @@ repo/
 .codegraph/
 .mimosa/
 
+### ZCode session artifacts ###
+.zcode/
+
 ### Python export tools ###
 __pycache__/
 *.py[cod]
