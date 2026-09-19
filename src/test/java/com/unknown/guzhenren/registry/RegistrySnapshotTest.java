@@ -8,6 +8,7 @@ import com.unknown.guzhenren.item.gu.MortalGuItem;
 import com.unknown.guzhenren.item.material.GuMaterialItem;
 import com.unknown.guzhenren.registry.effect.ModEffects;
 import com.unknown.guzhenren.registry.item.ModItems;
+import com.unknown.guzhenren.registry.particle.ModParticles;
 import net.minecraft.core.Holder;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
@@ -49,5 +50,10 @@ class RegistrySnapshotTest {
     @DisplayName("ModEffects registers exactly 20 effects")
     void effectCountIsPinned() {
         assertEquals(20, ModEffects.MOB_EFFECTS.getEntries().size());
+    }
+    @Test
+    @DisplayName("ModParticles registers exactly 2 particle types")
+    void particleCountIsPinned() {
+        assertEquals(2, ModParticles.PARTICLE_TYPES.getEntries().size());
     }
 }

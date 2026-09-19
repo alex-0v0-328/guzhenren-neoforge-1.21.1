@@ -40,6 +40,15 @@ public final class BodyAttackService {
     private static final ResourceLocation MODIFIER_ID =
             Guzhenren.id("strength_attack_damage");
     public static final double ZOMBIE_ATTACK_BASE = 5.0D;
+    /**
+     * Attack-panel value at and above which a landed Epic-Fight bare-hand/fist punch spawns the
+     * shockwave ring (Alex, 2026-09-19). Read as the panel number, so only fist-category weapon
+     * damage ever rides along with the strength bonus.
+     */
+    public static final double IMPACT_RING_ATTACK_THRESHOLD = 16.0D;
+    public static boolean showsImpactRing(double attackDamage) {
+        return attackDamage >= IMPACT_RING_ATTACK_THRESHOLD;
+    }
     public static double bonus(@NotNull Player player) {
         PathStrengthData data = PathStrengthService.get(player);
         double total = 0.0D;

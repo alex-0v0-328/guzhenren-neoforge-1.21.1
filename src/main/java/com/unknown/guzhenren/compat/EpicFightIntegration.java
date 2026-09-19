@@ -5,11 +5,14 @@ import com.unknown.guzhenren.attachment.service.aperture.ApertureService;
 import com.unknown.guzhenren.attachment.service.body.BodyAttackService;
 import com.unknown.guzhenren.attachment.service.body.BodyService;
 import com.unknown.guzhenren.custom.enums.body.ExtremePhysique;
+import com.unknown.guzhenren.effect.timed.CrashGuEffect;
 import com.unknown.guzhenren.entity.WildGuEntity;
+import com.unknown.guzhenren.particle.RingConeEmitter;
 import com.unknown.guzhenren.registry.effect.ModEffects;
 import java.util.Objects;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.player.Player;
@@ -32,8 +35,10 @@ import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 import yesman.epicfight.world.capabilities.entitypatch.player.ServerPlayerPatch;
 
 /**
- * The one required Epic Fight bridge: aptitude cap, undead free skill use, attack refresh, and target
- * exclusion for every {@link com.unknown.guzhenren.entity.WildGuEntity}.
+ * The one required Epic Fight bridge: aptitude cap, undead free skill use, attack refresh, target
+ * exclusion for every {@link com.unknown.guzhenren.entity.WildGuEntity}, the dash animation, and
+ * the dash-side shockwave cone trigger (ring spawning lives in {@code RingConeEmitter}; the
+ * heavy-fist hook is in {@code EpicFightServerEvents}).
  *
  * <p>The old GZR stamina attachment, sprint gate, jump bill, hunger exhaustion surcharge and client mixin are
  * deliberately absent. Epic Fight owns current stamina, regeneration, HUD and all ordinary consumption.
@@ -46,7 +51,6 @@ import yesman.epicfight.world.capabilities.entitypatch.player.ServerPlayerPatch;
 public final class EpicFightIntegration {
 
     private static final ResourceLocation STAMINA_MODIFIER = Guzhenren.id("epic_fight_stamina");
-    private static final double DASH_COORD_SCALE = 3.0D;
     private static AnimationManager.AnimationAccessor<DodgeAnimation> DASH_FORWARD;
     private static AnimationManager.AnimationAccessor<DodgeAnimation> DASH_BACKWARD;
     private EpicFightIntegration() {}
@@ -75,6 +79,7 @@ public final class EpicFightIntegration {
         if (animation == null) return;
         patch.playAnimationSynchronized(animation, 0.0F);
         patch.setModelYRot(yRot, true);
+        RingConeEmitter.dashCone(player, dashDirection(vertical, yRot));
     }
     public static void refresh(ServerPlayer player) {
         AttributeInstance instance = player.getAttribute(EpicFightAttributes.MAX_STAMINA);
@@ -112,6 +117,23 @@ public final class EpicFightIntegration {
     private static void onSetTarget(SetTargetEvent event) {
         if (event.getTarget() instanceof WildGuEntity) event.cancel();
     }
+    /**
+     * The dash motion direction as a unit vector: the payload's yRot is the Epic Fight MODEL facing
+     * (a backward dodge still faces the enemy), so {@link #ringYawOffset(int)} recovers the actual
+     * motion yaw. The client already bakes the strafe/diagonal angles (±45°/±90°) into that yaw, so
+     * the only correction left is the backward dodge animation moving opposite to the model facing:
+     * every backward combination flips 180, everything else rides the model yaw unchanged. Every
+     * Crash Gu dash moves in the yaw plane: the payload's vertical/horizontal are the keyboard axes
+     * (W/S and A/D), never world-up.
+     */
+    private static Vec3 dashDirection(int vertical, float yRot) {
+        float radians = (yRot + ringYawOffset(vertical)) * ((float) Math.PI / 180.0F);
+        return new Vec3(-Mth.sin(radians), 0.0D, Mth.cos(radians));
+    }
+    /** Motion-direction correction from model yaw to motion yaw; pinned by {@code DashRingYawTest}. */
+    static float ringYawOffset(int vertical) {
+        return vertical < 0 ? 180.0F : 0.0F;
+    }
     private static final class DashAnimation extends DodgeAnimation {
 
         private DashAnimation(float transitionTime, AnimationManager.AnimationAccessor<DodgeAnimation> accessor,
@@ -122,7 +144,7 @@ public final class EpicFightIntegration {
         @Override
         protected Vec3 getCoordVector(LivingEntityPatch<?> entityPatch,
                                       AssetAccessor<? extends DynamicAnimation> animation) {
-            return super.getCoordVector(entityPatch, animation).scale(DASH_COORD_SCALE);
+            return super.getCoordVector(entityPatch, animation).scale(CrashGuEffect.DASH_COORD_SCALE);
         }
     }
 }

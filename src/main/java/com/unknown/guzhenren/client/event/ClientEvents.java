@@ -5,6 +5,7 @@ import com.unknown.guzhenren.client.ModKeyMappings;
 import com.unknown.guzhenren.client.hud.ChargeHud;
 import com.unknown.guzhenren.client.hud.NourishHud;
 import com.unknown.guzhenren.client.hud.PlayerStatsHud;
+import com.unknown.guzhenren.client.particle.RingParticle;
 import com.unknown.guzhenren.client.renderer.BoarGuGeoRenderer;
 import com.unknown.guzhenren.client.renderer.RhinocerosBeetleGuGeoRenderer;
 import com.unknown.guzhenren.client.renderer.WildBoarGeoRenderer;
@@ -20,6 +21,7 @@ import com.unknown.guzhenren.registry.effect.ModEffects;
 import com.unknown.guzhenren.registry.entity.ModEntityTypes;
 import com.unknown.guzhenren.registry.fluid.ModFluids;
 import com.unknown.guzhenren.registry.menu.ModMenus;
+import com.unknown.guzhenren.registry.particle.ModParticles;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
@@ -37,6 +39,7 @@ import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
 import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
+import net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent;
 import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
 import net.neoforged.neoforge.network.PacketDistributor;
 import software.bernie.geckolib.model.DefaultedEntityGeoModel;
@@ -51,7 +54,7 @@ import yesman.epicfight.world.capabilities.EpicFightCapabilities;
  * ({@link com.unknown.guzhenren.client.hud.PlayerStatsHud},
  * {@link com.unknown.guzhenren.client.hud.ChargeHud},
  * {@link com.unknown.guzhenren.client.hud.NourishHud}), the key mapping for the B panel, the menu
- * screens for the two containers, fixed-texture renderers sharing each Gu family's GeckoLib model,
+ * screens for the two containers, the shockwave-ring particle provider, fixed-texture renderers sharing each Gu family's GeckoLib model,
  * and the wild boar's cutout GeckoLib model,
  * and the Hope Gu [希望蛊] entity as a
  * {@link net.minecraft.client.renderer.entity.NoopRenderer} (pure particles, no model), plus the
@@ -107,6 +110,11 @@ public final class ClientEvents {
     public static void onRegisterScreens(RegisterMenuScreensEvent event) {
         event.register(ModMenus.APERTURE_STORAGE_MENU.get(), ApertureStorageScreen::new);
         event.register(ModMenus.REFINEMENT_MENU.get(), RefinementScreen::new);
+    }
+    @SubscribeEvent
+    public static void onRegisterParticles(RegisterParticleProvidersEvent event) {
+        event.registerSpriteSet(ModParticles.SHOCKWAVE_RING.get(), RingParticle::dashTrail);
+        event.registerSpriteSet(ModParticles.IMPACT_RING.get(), RingParticle::facingMotion);
     }
     @SubscribeEvent
     public static void onRegisterRenderers(EntityRenderersEvent.RegisterRenderers event) {
@@ -170,6 +178,7 @@ public final class ClientEvents {
                                     - (DASH_YAW_CROSS * horizontal * (1 - Math.abs(vertical))
                                     + DASH_YAW_DIAGONAL * vertical * horizontal));
                             PacketDistributor.sendToServer(new DashPayload(vertical, horizontal, yRot));
+                            RingParticle.noteLocalDash(minecraft.player.tickCount);
                         });
             }
         }

@@ -10,6 +10,7 @@ import com.unknown.guzhenren.datagen.item.ModItemTagsProvider;
 import com.unknown.guzhenren.datagen.lang.EnUsLanguageProvider;
 import com.unknown.guzhenren.datagen.lang.ZhCnLanguageProvider;
 import com.unknown.guzhenren.datagen.loot.WildBoarLootProvider;
+import com.unknown.guzhenren.datagen.particle.ModParticleDescriptionProvider;
 import com.unknown.guzhenren.datagen.recipe.ModRecipeProvider;
 import com.unknown.guzhenren.datagen.world.ModBiomeTagsProvider;
 import java.util.List;
@@ -57,6 +58,9 @@ public final class DataGenerators {
         generator.addProvider(event.includeClient(), new ModItemModelProvider(packOutput, existingFileHelper));
 
         generator.addProvider(event.includeClient(), new ModBlockStateProvider(packOutput, existingFileHelper));
+
+        generator.addProvider(event.includeClient(),
+                new ModParticleDescriptionProvider(packOutput, existingFileHelper));
 
         ModDatapackProvider datapackProvider = generator.addProvider(event.includeServer(),
                 new ModDatapackProvider(packOutput, lookupProvider));
