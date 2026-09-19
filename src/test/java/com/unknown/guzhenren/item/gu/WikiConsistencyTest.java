@@ -39,7 +39,8 @@ import org.junit.jupiter.api.Test;
 class WikiConsistencyTest {
 
     private static final String ITEMS_PAGE = "玩家向/蛊真人MOD 1.0.0 蛊材&蛊虫.md";
-    private static final String BODY_PAGE = "玩家向/蛊真人MOD 1.0.0 空窍&肉体&脑海&魂魄.md";
+    private static final String APERTURE_PAGE = "玩家向/蛊真人MOD 1.0.0 空窍.md";
+    private static final String MIND_PAGE = "玩家向/蛊真人MOD 1.0.0 脑海.md";
     private static final String TIME_PAGE = "玩家向/蛊真人MOD 1.0.0 时间与时间戳总表.md";
     private static final String TEST_PAGE = "开发向/工程/测试集.md";
     private static final List<String> ONE_SHOT_HEADERS = List.of("蛊", "数量", "转", "道", "炼化真元", "效果");
@@ -149,11 +150,11 @@ class WikiConsistencyTest {
     }
     @Test
     void talentBrillianceAndMindCapacitiesMatchEnums() throws IOException {
-        WikiTable page = page(BODY_PAGE);
+        WikiTable aperturePage = page(APERTURE_PAGE);
         String[] talents = {"十绝", "甲等", "乙等", "丙等", "丁等"};
         for (int i = 0; i < talents.length; i++) {
             Talent talent = Talent.settable()[i];
-            WikiTable.Row row = page.row("资质", talents[i]);
+            WikiTable.Row row = aperturePage.row("资质", talents[i]);
             row.expect("基数", talent.getMinPercent() == talent.getMaxPercent()
                     ? List.of((long) talent.getMinPercent())
                     : List.of((long) talent.getMinPercent(), (long) talent.getMaxPercent()));
@@ -161,21 +162,22 @@ class WikiConsistencyTest {
             row.expect("自然回复倍率", List.of((long) talent.getRegenRate()));
             row.expect("Epic Fight 耐力上限", List.of((long) talent.getStaminaMaxPercent()));
         }
+        WikiTable mindPage = page(MIND_PAGE);
         String[] brillianceNames = {"普通", "尚可", "不俗", "卓越", "旷世"};
         for (int i = 0; i < brillianceNames.length; i++) {
             Brilliance brilliance = Brilliance.values()[i];
-            WikiTable.Row row = page.row("才情", brillianceNames[i]);
+            WikiTable.Row row = mindPage.row("才情", brillianceNames[i]);
             row.expect("念 / 自身时间秒", List.of(brilliance.getThoughtsPerSecond()));
             row.expect("权重", List.of((long) brilliance.getWeight()));
         }
         String[] wisdomNames = {"念", "意", "情"};
         for (int i = 0; i < wisdomNames.length; i++) {
-            page.row("内容", wisdomNames[i]).expect("默认上限", List.of(WisdomType.values()[i].getDefaultCapacity()));
+            mindPage.row("内容", wisdomNames[i]).expect("默认上限", List.of(WisdomType.values()[i].getDefaultCapacity()));
         }
     }
     @Test
     void essenceTableMatchesRankAndStageMultipliers() throws IOException {
-        WikiTable page = page(BODY_PAGE);
+        WikiTable page = page(APERTURE_PAGE);
         String[] stages = {"初阶", "中阶", "高阶", "巅峰"};
         String[] ranks = {"一转", "二转", "三转", "四转", "五转"};
         for (int i = 0; i < stages.length; i++) {

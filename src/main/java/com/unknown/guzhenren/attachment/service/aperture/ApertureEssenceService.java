@@ -4,7 +4,6 @@ import com.google.common.math.LongMath;
 import com.unknown.guzhenren.Ticks;
 import com.unknown.guzhenren.attachment.data.aperture.Aperture;
 import com.unknown.guzhenren.attachment.data.aperture.ApertureData;
-import com.unknown.guzhenren.attachment.service.body.BodyService;
 import com.unknown.guzhenren.attachment.service.path.PathTimeFlowService;
 import com.unknown.guzhenren.custom.enums.aperture.ApertureStatus;
 import com.unknown.guzhenren.effect.pool.EssenceQiEffect;
@@ -39,7 +38,6 @@ public final class ApertureEssenceService {
     private ApertureEssenceService() {}
     public static final long BASE_REGEN_PER_DAY = 100L;
     public static final int REGEN_INTERVAL_TICKS = Ticks.SECOND;
-    public static final double HALF_ZOMBIE_REGEN_RATE = 0.5;
     public static long regenPerDay(@NotNull Aperture a) {
         return BASE_REGEN_PER_DAY * a.talent().getRegenRate() * a.rank().getRankBase()
                 * a.stage().getEssenceMultiplier();
@@ -175,7 +173,6 @@ public final class ApertureEssenceService {
         }
 
         double bonus = essenceQiBonus(player);
-        double halfZombieRate = BodyService.isHalfZombie(player) ? HALF_ZOMBIE_REGEN_RATE : 1.0;
 
         for (int i = 0; i < data.count(); i++) {
             if (ApertureService.status(player, i) != ApertureStatus.NORMAL) {
@@ -193,7 +190,7 @@ public final class ApertureEssenceService {
             }
 
             double perStep = PathTimeFlowService.perStep(player,
-                    regenPerTick(aperture) * REGEN_INTERVAL_TICKS * (1.0 + bonus) * halfZombieRate);
+                    regenPerTick(aperture) * REGEN_INTERVAL_TICKS * (1.0 + bonus));
             if (perStep <= 0.0) continue;
 
             double total = carry[i] + perStep;
