@@ -1,6 +1,0 @@
-interface:
-  display_name: "GZR 开发与提交"
-  short_description: "GZR 物品实体开发、代码审查清理、验证与 GitHub 提交工作流"
-  default_prompt: "Use $gzr-workflow to complete the requested GZR development or review task."
-policy:
-  allow_implicit_invocation: true

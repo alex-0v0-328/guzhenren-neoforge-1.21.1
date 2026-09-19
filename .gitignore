@@ -45,11 +45,11 @@ repo/
 .codegraph/
 .mimosa/
 
-### ZCode session artifacts ###
+### Agent tooling: local-only, kept out of the repository (Alex, 2026-09-19) ###
 .zcode/
-
-### Kimi Code ###
-.kimi-code/local.toml
+.codex/
+.agents/
+.kimi-code/
 
 ### Python export tools ###
 __pycache__/
