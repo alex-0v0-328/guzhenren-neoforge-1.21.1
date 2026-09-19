@@ -26,6 +26,7 @@
 构建与运行都走 Windows JDK（`gradlew.bat`），在对应 mod 目录下：
 - **Windows Git Bash**：`MSYS_NO_PATHCONV=1 cmd.exe /c "gradlew.bat build"`（防 `/c` 被 MSYS 路径转换）；git 即 Windows git，push 可直接 `git push origin main`。
 - **WSL**：无 JDK，走 interop `cmd.exe /c 'gradlew.bat build'`；原生 git push 无凭据，必须 `cmd.exe /c "git push origin main"`。
+- ⚠ **行尾视角**：Windows 端 `core.autocrlf=true`、WSL git 未设——**WSL 下 `git status` 会把全树报成 modified（纯 CRLF 假象）**；WSL 里判断真实改动用 `git diff --ignore-cr-at-eol`，提交走 Windows Git Bash。`ModItems.java` 索引端是混合行尾（历史混入 CRLF）——新增行必须 LF，否则 `git diff --check` 报行尾空白。
 - `runData` 重生成 lang + json 到 `src/generated`（provider 改动后必跑），实际数据运行配置由 `build.gradle` 的 `data` run 指定 `gameDirectory=run-data`；不要按旧经验移走 `run/mods` 整包。Epic Fight 使用 compileOnly + localRuntime + testRuntimeOnly，GeckoLib 使用 compileOnly + localRuntime + testImplementation，`runData`/GameTest 的 classpath 必须可用；其他 jar 只有在出现当前可复现的构造期错误时才按证据处理。
 - 本地 `run/config/fml.toml` 设 `versionCheck = false`：NeoForge 更新检查访问 `mc-update-check.anthonyhilyard.com` 时，Iceberg/Advancement Plaques 经常超时；只关自动更新提示，不影响游戏，需恢复时改回 `true`。
 - ⚠ Gradle 不转发 stdin：`runServer` 无法注入命令。运行期行为验证只能靠 `runClient`（Alex 跑）或 GameTest。
@@ -40,10 +41,11 @@
 - L3 GameTest（`main` 源集 `gametest/` 包，`@GameTestHolder`）：`gradlew.bat runGameTestServer` 自动跑全部用例、退出码=失败数；能验证自动运行逻辑（world/tick/服务端状态），独立 gameDirectory `run-gametest/` 隔离 `run/mods` 整包（imblocker 在专用服务器崩，EF/Curios 走 classpath 照常）；场景模板 `empty9x9x9.nbt`（全空气，生成器 `tools/gen_template.py`）；CI 有同名步骤。客户端视觉和手感仍归 Alex 的 `runClient` 实测。
 - seam 范式照 `TendedGuItemTest`（package-private static、宙道时长过 `waited`、测试同包）。1.21.1 用 `assertBlockState`（无 `assertBlock(Block,Pos)`）；装 EF 时 `makeMockServerPlayerInLevel` 会被 `checkPacket` 拒——手工 mock ServerPlayer 范式见 `ModGameTests`。
   ⚠ GameTest 实体物理直驱：`setNoAi(true)` 连 travel/move 一起跳过，`setDeltaMovement` 无效；确定性位移用 `gu.move(MoverType.SELF, vec)`（碰撞与 `checkFallDamage` 都在里面）。同批测试的 mock 玩家会泄漏到邻居结构（6 格内可触发 Flee 抢占），goal 时序断言先想抖动或干脆绕开 goal。
+  ⚠ GameTest 夹具陷阱（各有实发）：mock `ServerPlayer` 带 60 tick 出生无敌——战斗断言前先推进夹具刻；`assertValueEqual` 走泛型 equals——float/double 不匹配会静默假败；查世界坐标先过 `helper.absolutePos()`；流体只向最短下坡蔓延（盆地测试自己围墙）；`succeedWhen` 多实体随机窗口用闩式 `boolean[]` 断言；GeckoLib 控制器时钟测试只能住 L2（GameTest 专用服务器碰 `ClientLevel` 会崩）。GameTest 失败先查夹具（断言数值类型、mock 玩家摆放），再动生产代码。
 
 ## 5. 数据模型速查（guzhenren）
 
-五个数据域包（aperture/body/soul/path/mind）、**九个 record attachment**，**不可变**；写入只能过服务（每域一个服务包）。data/ 与 service/ 同构五包；qi 与 strength 是 path 包内的子域（力道/气道/宙道皆流派，soul 非流派独立成包）。⚠ **类名以其所在包名为前缀**（path 包内即 `PathQiData`/`PathQiEntry`/`PathStrengthData`/`PathQiService`/`PathStrengthService`）。
+五个数据包（aperture/body/soul/path/mind）、**九个 record attachment**，**不可变**；写入只能过服务。data/ 与 service/ 同构五包；qi 与 strength 是 path 包内的子域（力道/气道/宙道皆流派，soul 非流派独立成包）。⚠ **类名以其所在包名为前缀**（path 包内即 `PathQiData`/`PathQiEntry`/`PathStrengthData`/`PathQiService`/`PathStrengthService`）。
 
 | Attachment         | key                | 存什么                                                                                                                             | sync          | serialize |
 |--------------------|--------------------|------------------------------------------------------------------------------------------------------------------------------------|---------------|-----------|
@@ -150,7 +152,7 @@ attackDamage = 1 + Σ beast.attackBonus + usableJin × HumanStrength.ATTACK_PER_
 
 **两个分支，类即判据**（`reusable`/`feedable` 布尔已删，勿加回）：
 - 一次性 [one-shot] ×17：希望蛊 + 舍利 ×5 + 生机叶 + 寿蛊 ×4 + 胆识蛊 + 第二空窍蛊 ×5 —— 炼化即使用、**即时**（`useDurationTicks` final 恒 0）+ 40 tick（2 秒）冷却、堆叠、无组件。胆识蛊 +10 魂上限。**希望蛊是例外**：`stacksTo(1)`（骰值在栈上，组件整栈共享）、80 tick 仪式、直接继承 `MortalGuItem`。
-- 需照顾 [tended] ×53（真值在 `ModItems`）：`TendedGuItem`，`stacksTo(1)`，`RefinedGuState` 一个族。其中 `ConsumedGuItem`（用完消失）×11：更蛊 ×2 + 恶念蛊 ×4 + 随意蛊 ×2 + 石窍蛊 ×3；其余 42：兽力虚影 6（灌注 3 + 即时 3）+ 人力钧力 4 + 突进 4（横/纵/冲四/冲五）+ 自力更生 3 + 苦力 1 + 全力以赴 3 + 酒虫 4 + 元老蛊 5 + 天元宝莲 3 + 僵尸蛊 9。另有蛊材 32（元石 + 酒 ×5 + 气道 21 + 人窍 ×5）；**合计 102 件注册物品**。
+- 需照顾 [tended] ×53（真值在 `ModItems`）：`TendedGuItem`，`stacksTo(1)`，`RefinedGuState` 一个族。其中 `ConsumedGuItem`（用完消失）×11：更蛊 ×2 + 恶念蛊 ×4 + 随意蛊 ×2 + 石窍蛊 ×3；其余 42：兽力虚影 6（灌注 3 + 即时 3）+ 人力钧力 4 + 突进 4（横/纵/冲四/冲五）+ 自力更生 3 + 苦力 1 + 全力以赴 3 + 酒虫 4 + 元老蛊 5 + 天元宝莲 3 + 僵尸蛊 9。另有蛊材 32（元石 + 酒 ×5 + 气道 21 + 人窍 ×5）+ 元泉方块物品 1；**合计 103 件注册物品**。
 **GuSpec 决定形状，只有两种**：`channel(essencePerRound)` → 灌注 7 只（兽力灌注 3 + 人力钧力 4）；`costPerUse(essence)` → 即时 51 只（0 价组 ×24：元老蛊 5 · 更蛊 2 · 恶念蛊 4 · 随意蛊 2 · 石窍蛊 3 · 第二空窍蛊 5 · 天元宝莲 3 被动）。`GuSpec.validate()` 注册期跑：channel 必须整除饱食率，不自洽直接起不来并报是哪只蛊。
 
 **四手势**：
@@ -256,7 +258,7 @@ attackDamage = 1 + Σ beast.attackBonus + usableJin × HumanStrength.ATTACK_PER_
 - 心动词与呈现：颜色**只表反馈类别**（绿=变了，红=没变+原因；绝不评价数值）；[GZR] 永远默认色；一个效果服务整条转数阶梯时图标按 amplifier 换（`amplifier = tier()`，图标后缀 = 转数），**别拆成每转一个效果**；不带后缀的旧图留着（vanilla 拼图集要）。HUD 布局 Alex runClient 看过并接受，别擅自"改进"。
   **所有 MobEffect 粒子关闭**（`ModEffects.instance` helper 统一 `showParticles=false, showIcon=true`）；**效果颜色统一白色（`EFFECT_COLOR = 0xFFFFFF`）**，具体颜色表不再是运行真值。
   域强调色唯一真值在 `client/ModPalette`：空窍 `#4FC3F7` · 肉身 `#FFAB91` · 魂魄 `#D388FF` · 流派造诣 `#FFD54F` · 脑海 `#4DD0E1` · 炼蛊 `#81C784`；跨面同义铬色（面板底/边框/槽底/按钮三态/条底边/精炼池蓝）也收 `ModPalette`，单面独用的色留各文件本地。
-- 命令：`command/sub/` 与 attachment 同构五包（aperture/body/soul/path/mind；`CmdPath`/`CmdQi`/`CmdStrength` 在 path 包），**命令树顶级同五域**——`/gzr path` 独立成根。☠ path literal 下 `marks`/`attainment`/`qi`/`strength` **全字面量并排**、`<path>` 参数挂在 marks/attainment 之下——`GuPath` 的 `qi`/`strength` 值与子命令同名，字面量在前防 word 参数被劫持（`/gzr path marks <p> set …`，动词在 `<path>` 之后）。`ModEnumArgument` 是 `word()`，**同义字面量不归并成枚举**（`mind wisdom` 三池是字面量，别"整理"）；嵌套枚举要自己的参数名（`ARG_PATH`/`ARG_KIND`）；`awaken`/`reset` 后必须 `refreshCommands`（`onClone` 是唯一豁免）；`requires()` 是呈现、`applyOnAwakened` 才护数据。☠ `/gzr` 是 redirect，补全器读上文必须走 `getLastChild()`（`ModEnumArgument.get` 已是那个缝；`ModEnumArgumentTest` 守它，别因"没人用"简化掉——指纹是 `/guzhenren …` 好使而 `/gzr …` 不好使）。
+- 命令：`command/sub/` 与 attachment 同构五包（aperture/body/soul/path/mind；`CmdPath`/`CmdQi`/`CmdStrength` 在 path 包），**命令树顶级同五包**——`/gzr path` 独立成根。☠ path literal 下 `marks`/`attainment`/`qi`/`strength` **全字面量并排**、`<path>` 参数挂在 marks/attainment 之下——`GuPath` 的 `qi`/`strength` 值与子命令同名，字面量在前防 word 参数被劫持（`/gzr path marks <p> set …`，动词在 `<path>` 之后）。`ModEnumArgument` 是 `word()`，**同义字面量不归并成枚举**（`mind wisdom` 三池是字面量，别"整理"）；嵌套枚举要自己的参数名（`ARG_PATH`/`ARG_KIND`）；`awaken`/`reset` 后必须 `refreshCommands`（`onClone` 是唯一豁免）；`requires()` 是呈现、`applyOnAwakened` 才护数据。☠ `/gzr` 是 redirect，补全器读上文必须走 `getLastChild()`（`ModEnumArgument.get` 已是那个缝；`ModEnumArgumentTest` 守它，别因"没人用"简化掉——指纹是 `/guzhenren …` 好使而 `/gzr …` 不好使）。
 - 命令树（只此一张）：
   ```
   /gzr info  [aperture|body|soul|path|mind] [targets]     /gzr awaken | reset [targets]
@@ -281,7 +283,7 @@ attackDamage = 1 + Σ beast.attackBonus + usableJin × HumanStrength.ATTACK_PER_
 - ⚠ GeckoLib：`geckolib-neoforge-1.21.1-4.9.2.jar` 是**第二个硬依赖**（豕蛊与横冲系甲虫模型动画），直引 `run/mods`（compileOnly + localRuntime + testImplementation——runData/GameTest classpath 都靠它）；`neoforge.mods.toml` required `[4.9,4.10)`。4.9.2 资产路径 `assets/<modid>/{geo,animations}/entity/`——**无** `geckolib/` 子目录（那是 GL5 约定，别照新 wiki 抄）；升级前编译 + `runClient` 验证。模型权威源在 `C:\alex\code\blockbench\gzr-models\`（只读，含 handoff 文档）。
   ⚠ **直引 `run/mods` 的 jar 在 CI 上不存在**（`run/` 已 gitignore）——`.github/workflows/build.yml` 有 Modrinth 下载步骤（epic-fight 版本 id `8HHhJt6i`、geckolib `tPkJmim6`）；**新增任何直引 `run/mods` 的硬依赖必须同步加下载步骤**，否则 CI 全红而本地全绿（2026-09-04 GeckoLib 实发）。
 - 空窍存储补充：`mayPlace` 只收 `MortalGuItem`（一次性蛊进本命槽=陷阱）；`ItemStack.OPTIONAL_CODEC`（内部空是真槽位，只裁**尾部**空洞）；每窍普通存储+本命格总负载 `MAX_LOAD 256`，`GuSlot#getMaxStackSize(ItemStack)` 负责鼠标/Shift 部分转移。⚠ `APERTURE_STORAGE` 不 sync，槽位预检必须吃菜单 `DATA_LOAD`，不可从客户端 attachment 重算；旧档超载以 `max(256, currentLoad)` 为临时上限，只许不增载。页数无额外硬上限。
-- 进度系统 [Advancement]（原版进度树，首条 `first_awakening`「开窍！」已落地）：触发器类住 `advancement/`、注册 holder 住 `registry/advancement/ModCriteriaTriggers`（**第九个 DeferredRegister**，挂 `BuiltInRegistries.TRIGGER_TYPES.key()`）；☠ 1.21.1 触发器已是内置注册表，别用 vanilla 公开的 `CriteriaTriggers.register(String,..)`——它落 `minecraft:` 命名空间。进度 datagen 住 `datagen/advancement/ModAdvancementProvider`（includeServer）。触发器**唯一挂点 = 「使用完成」的服务/物品落点**（首条在 `HopeGuItem.apply` 的 `awaken` 后），命令是覆盖层不计入进度；vanilla 对重复触发幂等，不用自己做闩；奖励层未建。后续批次接入规则见 wiki《进度系统》。
+- 进度系统 [Advancement]（原版进度树，首条 `first_awakening`「开窍！」已落地）：触发器类住 `advancement/`、注册 holder 住 `registry/advancement/ModCriteriaTriggers`（**第十二个 DeferredRegister holder**——全模组 12 holder / 13 register（`ModRecipes` 双持），挂 `BuiltInRegistries.TRIGGER_TYPES.key()`）；☠ 1.21.1 触发器已是内置注册表，别用 vanilla 公开的 `CriteriaTriggers.register(String,..)`——它落 `minecraft:` 命名空间。进度 datagen 住 `datagen/advancement/ModAdvancementProvider`（includeServer）。触发器**唯一挂点 = 「使用完成」的服务/物品落点**（首条在 `HopeGuItem.apply` 的 `awaken` 后），命令是覆盖层不计入进度；vanilla 对重复触发幂等，不用自己做闩；奖励层未建。后续批次接入规则见 wiki《进度系统》。
 - 读 wiki 时注意：`玩家向/` 是**版本快照**；设计以 `开发向/` 为准，数值以代码 `ModItems` 为准，冲突问 Alex。
 
 ## 15. TODO 汇总（在 wiki，不在这里）

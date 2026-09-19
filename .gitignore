@@ -48,6 +48,9 @@ repo/
 ### ZCode session artifacts ###
 .zcode/
 
+### Kimi Code ###
+.kimi-code/local.toml
+
 ### Python export tools ###
 __pycache__/
 *.py[cod]
