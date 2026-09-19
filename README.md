@@ -5,15 +5,15 @@
 
 ## 工具链
 
-| | |
-|---|---|
-| Minecraft | `1.21.1` |
-| NeoForge | `21.1.238` |
-| Parchment | `2024.11.17` |
-| Java | `21` |
+|                  |                                       |
+|------------------|---------------------------------------|
+| Minecraft        | `1.21.1`                              |
+| NeoForge         | `21.1.238`                            |
+| Parchment        | `2024.11.17`                          |
+| Java             | `21`                                  |
 | mod id / package | `guzhenren` · `com.unknown.guzhenren` |
-| 必需依赖 | `Epic Fight` · `GeckoLib` |
-| 可选依赖 | `JEI` · `Curios` |
+| 必需依赖         | `Epic Fight` · `GeckoLib`             |
+| 可选依赖         | `JEI` · `Curios`                      |
 
 Windows 下从项目目录运行：
 
@@ -37,13 +37,13 @@ gradlew.bat build -PwikiDir="C:\path\to\project-wiki"
 
 玩家持久状态主要是 NeoForge data attachment：九个不可变 record attachment 由各域 service 写入；另有 `BORN`（序列化、不同步）与 `ESSENCE_CARRY`（不序列化、不同步）两个特殊字段。
 
-| 域 | attachment | 内容 |
-|---|---|---|
+| 域              | attachment                                               | 内容                           |
+|-----------------|----------------------------------------------------------|--------------------------------|
 | `aperture` 空窍 | `ApertureData`、`ApertureNourishData`、`ApertureStorage` | 空窍、温养会话、蛊虫仓与本命格 |
-| `body` 肉身 | `BodyData` | 体质、种族、年龄、寿元与形态 |
-| `soul` 魂魄 | `SoulData` | 当前魂魄与上限 |
-| `path` 流派 | `PathData`、`PathQiData`、`PathStrengthData` | 造诣道痕、八种气、力道数据 |
-| `mind` 脑海 | `MindData` | 才情与念/意/情三池 |
+| `body` 肉身     | `BodyData`                                               | 体质、种族、年龄、寿元与形态   |
+| `soul` 魂魄     | `SoulData`                                               | 当前魂魄与上限                 |
+| `path` 流派     | `PathData`、`PathQiData`、`PathStrengthData`             | 造诣道痕、八种气、力道数据     |
+| `mind` 脑海     | `MindData`                                               | 才情与念/意/情三池             |
 
 除 `ApertureStorage` 外，玩家状态 attachment 以 `OWNER_ONLY` 同步给持有者，并由各自 `CODEC` 持久化。`ApertureStorage` 序列化但不同步，客户端通过容器槽位、原版点击通道和 `ContainerData` 读取视图。`ESSENCE_CARRY` 是真元回复余数，原地更新且不序列化；`BORN` 只保存出生初始化闩。玩家数据不写进自定义 payload。
 
@@ -58,7 +58,7 @@ gradlew.bat build -PwikiDir="C:\path\to\project-wiki"
 
 物品分为一次性蛊与需照顾蛊；`TendedGuItem` 的 `RefinedGuState` 是栈组件，野生栈没有该组件，炼化后才进入温养、喂养和使用流程。炼蛊使用 `GuRecipe` 数据配方与 `RefinementMenu`，输入、时钟和输出是临时容器状态，当前只有两张测试蛊方。自然生成的希望蛊、三种豕蛊和四种横冲系甲虫由群系数据与实体 AI 接入，右键捕捉得到未炼化物品。
 
-Epic Fight 保存耐力与普通消耗，GZR 通过 `EpicFightIntegration` 提供派生上限、技能与 Dash 桥接；GeckoLib 负责豕蛊、横冲系甲虫与野猪的模型和动画。甲虫共用一套几何与五段动画，横冲为浅色、直撞为原色、四/五转横冲直撞共用深色；物品图标保持独立。野猪为独立地面中立生物，在温带森林自然生成，仅受击个体反击，服务端结算冲撞与顶飞，掉落原版猪肉；支持 `/summon guzhenren:wild_boar`，不提供刷怪蛋、繁殖或驯服。JEI 目前只有 optional 元数据，没有 Java 插件或构建依赖；Curios 为 optional，使用 API `compileOnly`、完整 jar `localRuntime`，其数据 provider 在 `runData` 生成槽位文件。FTB Quests 不进入核心模组，属于整合包层边界。
+Epic Fight 保存耐力与普通消耗，GZR 通过 `EpicFightIntegration` 提供派生上限、技能与 Dash 桥接，Dash 与重拳命中还有白色激波环尾迹作视觉反馈（沿路径原地绽放、纯视觉无伤害；重拳需面板攻击 ≥16，dash 环对本人第一人称隐藏）；GeckoLib 负责豕蛊、横冲系甲虫与野猪的模型和动画。甲虫共用一套几何与五段动画，横冲为浅色、直撞为原色、四/五转横冲直撞共用深色；物品图标保持独立。野猪为独立地面中立生物，在温带森林自然生成，仅受击个体反击，服务端结算冲撞与顶飞，掉落原版猪肉；支持 `/summon guzhenren:wild_boar`，不提供刷怪蛋、繁殖或驯服。JEI 目前只有 optional 元数据，没有 Java 插件或构建依赖；Curios 为 optional，使用 API `compileOnly`、完整 jar `localRuntime`，其数据 provider 在 `runData` 生成槽位文件。FTB Quests 不进入核心模组，属于整合包层边界。
 
 ## 测试
 
