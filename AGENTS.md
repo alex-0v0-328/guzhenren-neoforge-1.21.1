@@ -25,7 +25,7 @@ The main agent owns goals, scope, priorities, decomposition, integration and fin
 - Subagents don't expand their own scope or change direction. Out-of-scope findings, design conflicts, anything needing Alex's call: report, never decide.
 - A subagent report must state result, evidence (paths and line numbers), actual changes, verification, assumptions, blockers and leftovers. The main agent re-verifies against the live checkout and WIP before accepting anything.
 - Designs Alex hasn't decided are undecided. No agent treats the wiki's pending-design notes or TODO lists as settled.
-- Model tiers per environment — ZCode: main `GLM-5.3` (highest), sub `GLM-5.3-Flash` (highest); Codex: main `GPT-6-Astra Medium`, sub `GPT-5.6-Luna-Max`; Kimi Code (WSL): main `kimi-code/k3`, subagents inherit main (no secondary pool configured) — environment notes in `.kimi-code/`.
+- Model tiers per environment — ZCode: main `GLM-5.3` (highest), sub `GLM-5.3-Flash` (highest); Codex: main `GPT-6-Astra Medium`, sub `GPT-5.6-Luna-Max`; Kimi Code (WSL): main default `kimi-code/k3-256k` (Alex hand-picks 1M `kimi-code/k3` for foreseeably huge tasks), subagent pool default `kimi-code/kimi-for-coding-highspeed` via `[secondary_model]` — environment notes in `.kimi-code/`.
 - Plans carry a subagent-allocation section; infrastructure plans additionally state how current WIP is included and the onboarding rule for future work; new-feature plans end with a read-only deep self-check sweep (fix real findings, log false positives).
 - Parallel work never shares write-files, and two Gradle runs never write the same output directory (retry on lock conflict, or serialize).
 
@@ -75,6 +75,8 @@ Exceptions (format yields to the task): `explain`-type requests get the full wal
 | `.kimi-code/`                       | Kimi Code (WSL) environment notes + project-local config                                             |
 | `tools/gen_template.py`             | Regenerates the GameTest `empty9x9x9.nbt` scenario template                                          |
 | `tools/export_rhinoceros_beetle.py` | Converts the blockbench `.bbmodel` into the beetle's GeckoLib model/animation files (test alongside) |
+| `tools/backup_wiki.py`              | Backs up wiki/rules files into `../Temp` with a verified SHA-256 manifest (test alongside)           |
+| `tools/poll_actions_ci.py`          | Polls GitHub Actions via REST (`curl -L`, no `gh`) until the latest run finishes (test alongside)    |
 
 Obsidian note: files named like their title don't repeat that title as an H1 in the body. Wiki documents describe the present; version snapshots, undecided designs and rejected-idea records are anti-regression history — keep them.
 
