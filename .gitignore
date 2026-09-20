@@ -50,6 +50,10 @@ repo/
 .codex/
 .agents/
 .kimi-code/
+.zcodeignore
+
+### Local-only tool scripts: new files under tools/ stay untracked; already-tracked tools stay in the repo (Alex, 2026-09-20) ###
+/tools/
 
 ### Python export tools ###
 __pycache__/
