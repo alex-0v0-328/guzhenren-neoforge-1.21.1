@@ -183,7 +183,7 @@ tasks.register('pureTest', Test) {
     useJUnitPlatform()
     testLogging {
         events 'failed'
-        exceptionFormat 'full'
+        exceptionFormat = 'full'
     }
 }
 check.dependsOn pureTest
@@ -213,7 +213,7 @@ tasks.named('test', Test) {
     }
     testLogging {
         events 'failed', 'skipped'
-        exceptionFormat 'full'
+        exceptionFormat = 'full'
     }
 }
 
