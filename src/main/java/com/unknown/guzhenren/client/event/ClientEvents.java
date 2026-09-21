@@ -22,6 +22,7 @@ import com.unknown.guzhenren.registry.entity.ModEntityTypes;
 import com.unknown.guzhenren.registry.fluid.ModFluids;
 import com.unknown.guzhenren.registry.menu.ModMenus;
 import com.unknown.guzhenren.registry.particle.ModParticles;
+import com.unknown.guzhenren.registry.world.ModDimensions;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
@@ -152,7 +153,10 @@ public final class ClientEvents {
                     .ifPresent(patch -> patch.toVanillaMode(true));
         }
         while (ModKeyMappings.OPEN_INFO.consumeClick()) {
-            if (minecraft.screen == null) minecraft.setScreen(new PlayerInfoScreen());
+            if (minecraft.screen == null
+                    && !minecraft.player.level().dimension().equals(ModDimensions.TREASURE_YELLOW_HEAVEN)) {
+                minecraft.setScreen(new PlayerInfoScreen());
+            }
         }
 
         boolean up = minecraft.options.keyUp.isDown();

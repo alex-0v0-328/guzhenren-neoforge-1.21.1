@@ -1,0 +1,12 @@
+{
+  "type": "guzhenren:treasure_yellow_heaven",
+  "generator": {
+    "type": "minecraft:flat",
+    "settings": {
+      "biome": "guzhenren:treasure_yellow_heaven",
+      "features": false,
+      "lakes": false,
+      "layers": []
+    }
+  }
+}

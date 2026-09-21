@@ -6,6 +6,7 @@ import com.unknown.guzhenren.attachment.data.aperture.ApertureData;
 import com.unknown.guzhenren.attachment.data.aperture.ApertureNourishData;
 import com.unknown.guzhenren.attachment.data.aperture.ApertureStorage;
 import com.unknown.guzhenren.attachment.data.body.BodyData;
+import com.unknown.guzhenren.attachment.data.dimension.DimensionReturnData;
 import com.unknown.guzhenren.attachment.data.mind.MindData;
 import com.unknown.guzhenren.attachment.data.path.PathData;
 import com.unknown.guzhenren.attachment.data.path.PathQiData;
@@ -98,6 +99,13 @@ public final class ModAttachments {
             "mind_data", () -> AttachmentType.builder(() -> MindData.DEFAULT)
                     .serialize(MindData.CODEC)
                     .sync(OWNER_ONLY, MindData.STREAM_CODEC)
+                    .build());
+    //endregion
+
+    //region Dimension travel
+    public static final Supplier<AttachmentType<DimensionReturnData>> DIMENSION_RETURN = ATTACHMENT_TYPES.register(
+            "dimension_return", () -> AttachmentType.builder(() -> DimensionReturnData.DEFAULT)
+                    .serialize(DimensionReturnData.CODEC)
                     .build());
     //endregion
 

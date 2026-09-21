@@ -1,5 +1,6 @@
 package com.unknown.guzhenren;
 
+import com.unknown.guzhenren.client.dimension.TreasureYellowHeavenEffects;
 import com.unknown.guzhenren.client.fluid.SpiritSpringClientExtensions;
 import com.unknown.guzhenren.client.icon.GradedEffectIcon;
 import com.unknown.guzhenren.client.icon.ItemEffectIcon;
@@ -9,15 +10,16 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
+import net.neoforged.neoforge.client.event.RegisterDimensionSpecialEffectsEvent;
 import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsEvent;
 
 /**
  * Client-only entry point, so that nothing which would crash a dedicated server sits in {@link Guzhenren}.
  *
  * <p>Annotated {@code @Mod(dist = Dist.CLIENT)}. It registers every MobEffect's client extension --
- * the effect icons -- plus the Spirit Spring's fluid rendering on the mod bus; all other
- * client-side event subscribers live under the {@code client/} package tree and are loaded only on
- * the client.
+ * the effect icons -- plus the Spirit Spring's fluid rendering and the Treasure Yellow Heaven
+ * dimension special effects on the mod bus; all other client-side event subscribers live under the
+ * {@code client/} package tree and are loaded only on the client.
  *
  * @author Alex
  * @version 1.0.0
@@ -30,6 +32,10 @@ public class GuzhenrenClient {
 
     public GuzhenrenClient(ModContainer container, IEventBus modEventBus) {
         modEventBus.addListener(GuzhenrenClient::onRegisterClientExtensions);
+        modEventBus.addListener(GuzhenrenClient::onRegisterDimensionSpecialEffects);
+    }
+    private static void onRegisterDimensionSpecialEffects(RegisterDimensionSpecialEffectsEvent event) {
+        event.register(Guzhenren.id("treasure_yellow_heaven"), new TreasureYellowHeavenEffects());
     }
     private static void onRegisterClientExtensions(RegisterClientExtensionsEvent event) {
         event.registerMobEffect(GradedEffectIcon.mobEffect("essence_qi", 1, 5), ModEffects.ESSENCE_QI);

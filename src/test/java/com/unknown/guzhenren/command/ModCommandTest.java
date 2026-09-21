@@ -69,6 +69,27 @@ class ModCommandTest {
         assertNull(dispatcher.getRoot().getChild("guzhenren").getChild("aperture").getChild("physique"));
     }
     @Test
+    void dimensionTravelCommandsLiveOnTheGuworldRoot() throws Exception {
+        CommandDispatcher<CommandSourceStack> dispatcher = new CommandDispatcher<>();
+        Method register = ModCommand.class.getDeclaredMethod("register", CommandDispatcher.class);
+        register.setAccessible(true);
+        register.invoke(null, dispatcher);
+
+        var guzhenren = dispatcher.getRoot().getChild("guzhenren");
+        assertNull(guzhenren.getChild("enter"));
+        assertNull(guzhenren.getChild("exit"));
+
+        var guworld = dispatcher.getRoot().getChild("guworld");
+        assertNotNull(guworld);
+        var enter = guworld.getChild("enter");
+        assertNotNull(enter);
+        assertNotNull(enter.getChild("dimension"));
+        assertNotNull(enter.getChild("dimension").getChild("targets"));
+        var exit = guworld.getChild("exit");
+        assertNotNull(exit);
+        assertNotNull(exit.getChild("targets"));
+    }
+    @Test
     void unindexedApertureCommandDefaultsToPrimaryAperture() {
         assertEquals(ApertureData.PRIMARY,
                 assertDoesNotThrow(() -> apertureOf(apertureContext(null))));

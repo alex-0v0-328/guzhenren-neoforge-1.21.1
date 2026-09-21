@@ -5,6 +5,7 @@ import com.mojang.brigadier.tree.LiteralCommandNode;
 import com.unknown.guzhenren.Guzhenren;
 import com.unknown.guzhenren.command.sub.CmdInfo;
 import com.unknown.guzhenren.command.sub.CmdReset;
+import com.unknown.guzhenren.command.sub.CmdTravel;
 import com.unknown.guzhenren.command.sub.aperture.CmdAperture;
 import com.unknown.guzhenren.command.sub.aperture.CmdAwaken;
 import com.unknown.guzhenren.command.sub.body.CmdBody;
@@ -22,9 +23,13 @@ import net.neoforged.neoforge.event.RegisterCommandsEvent;
  *
  * <p>Registers the literal {@code guzhenren} with permission level 2, then attaches the eight root
  * branches ({@link com.unknown.guzhenren.command.sub.CmdInfo}, {@code CmdAwaken}, {@code CmdReset},
- * {@code CmdAperture}, {@code CmdBody}, {@code CmdSoul}, {@code CmdPath}, {@code CmdMind}). The
+ * {@code CmdAperture}, {@code CmdBody}, {@code CmdSoul}, {@code CmdPath}, {@code CmdMind}) -- all
+ * attachment-data commands. The
  * {@code gzr} alias is a {@code redirect} to that root, so everything typed after it parses into a
  * child context.
+ *
+ * <p>World-environment commands live on the separate {@code guworld} root (same permission level):
+ * currently {@link com.unknown.guzhenren.command.sub.CmdTravel}'s {@code enter}/{@code exit}.
  *
  * @author Alex
  * @version 1.0.0
@@ -57,5 +62,10 @@ public final class ModCommand {
         dispatcher.register(Commands.literal("gzr")
                 .requires(source -> source.hasPermission(PERMISSION_LEVEL))
                 .redirect(root));
+
+        dispatcher.register(Commands.literal("guworld")
+                .requires(source -> source.hasPermission(PERMISSION_LEVEL))
+                .then(CmdTravel.enterNode())
+                .then(CmdTravel.exitNode()));
     }
 }

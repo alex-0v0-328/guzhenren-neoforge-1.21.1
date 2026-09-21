@@ -53,6 +53,7 @@ public class ZhCnLanguageProvider extends LanguageProvider {
     protected void addTranslations() {
         addEnumKeys();
         addDisplayKeys();
+        addDimensionKeys();
         addCommandKeys();
         addScreenKeys();
         addItemKeys();
@@ -156,6 +157,15 @@ public class ZhCnLanguageProvider extends LanguageProvider {
     }
     //endregion
 
+    //region DIMENSION
+    private void addDimensionKeys() {
+        add("dimension.guzhenren.treasure_yellow_heaven", "宝黄天");
+        add("biome.guzhenren.treasure_yellow_heaven", "宝黄天");
+        add("travelerstitles.guzhenren.treasure_yellow_heaven", "宝黄天");
+        add("travelerstitles.guzhenren.treasure_yellow_heaven.color", "f4d35e");
+    }
+    //endregion
+
     //region COMMAND
     private void addCommandKeys() {
         add("guzhenren.command.header", "[GZR]");
@@ -197,6 +207,12 @@ public class ZhCnLanguageProvider extends LanguageProvider {
         add("guzhenren.command.info.mind_entry", "  %s  %s / %s");
 
         add("guzhenren.command.info.detail", " [%s]");
+
+        add("guzhenren.command.travel.entered", "已将 %s 送入%s");
+        add("guzhenren.command.travel.exited", "已将 %s 送出锚定维度");
+        add("guzhenren.command.travel.already_inside", "%s 已经在%s内");
+        add("guzhenren.command.travel.not_inside", "%s 不在任何锚定维度内");
+        add("guzhenren.command.travel.unknown_dimension", "%s 不是锚定维度");
     }
     //endregion
 

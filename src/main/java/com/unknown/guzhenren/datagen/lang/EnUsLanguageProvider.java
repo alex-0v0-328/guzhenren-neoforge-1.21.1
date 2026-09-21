@@ -51,6 +51,7 @@ public class EnUsLanguageProvider extends LanguageProvider {
     protected void addTranslations() {
         addEnumKeys();
         addDisplayKeys();
+        addDimensionKeys();
         addCommandKeys();
         addScreenKeys();
         addItemKeys();
@@ -154,6 +155,15 @@ public class EnUsLanguageProvider extends LanguageProvider {
     }
     //endregion
 
+    //region DIMENSION
+    private void addDimensionKeys() {
+        add("dimension.guzhenren.treasure_yellow_heaven", "Treasure Yellow Heaven");
+        add("biome.guzhenren.treasure_yellow_heaven", "Treasure Yellow Heaven");
+        add("travelerstitles.guzhenren.treasure_yellow_heaven", "Treasure Yellow Heaven");
+        add("travelerstitles.guzhenren.treasure_yellow_heaven.color", "f4d35e");
+    }
+    //endregion
+
     //region COMMAND
     private void addCommandKeys() {
         add("guzhenren.command.header", "[GZR]");
@@ -195,6 +205,12 @@ public class EnUsLanguageProvider extends LanguageProvider {
         add("guzhenren.command.info.mind_entry", "  %s  %s / %s");
 
         add("guzhenren.command.info.detail", " [%s]");
+
+        add("guzhenren.command.travel.entered", "Sent %s into %s");
+        add("guzhenren.command.travel.exited", "Returned %s from the anchored dimension");
+        add("guzhenren.command.travel.already_inside", "%s is already inside %s");
+        add("guzhenren.command.travel.not_inside", "%s is not inside an anchored dimension");
+        add("guzhenren.command.travel.unknown_dimension", "%s is not an anchored dimension");
     }
     //endregion
 

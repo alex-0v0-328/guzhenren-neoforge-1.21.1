@@ -14,6 +14,7 @@ import com.unknown.guzhenren.network.payload.OpenApertureStoragePayload;
 import com.unknown.guzhenren.network.payload.OpenRefinementPayload;
 import com.unknown.guzhenren.network.payload.SetSecondaryPathPayload;
 import com.unknown.guzhenren.registry.effect.ModEffects;
+import com.unknown.guzhenren.registry.world.ModDimensions;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.SimpleMenuProvider;
@@ -44,6 +45,9 @@ public final class ModPayloads {
 
     private ModPayloads() {}
     private static final String VERSION = "1";
+    private static boolean inTyh(ServerPlayer player) {
+        return player.level().dimension().equals(ModDimensions.TREASURE_YELLOW_HEAVEN);
+    }
     private static final String STORAGE_TITLE = "guzhenren.menu.aperture_storage";
     private static final String REFINEMENT_TITLE = "guzhenren.menu.refinement";
     @SubscribeEvent
@@ -64,6 +68,7 @@ public final class ModPayloads {
     }
     private static void nourishAperture(NourishAperturePayload payload, IPayloadContext context) {
         if (!(context.player() instanceof ServerPlayer player)) return;
+        if (inTyh(player)) return;
         if (payload.aperture() < 0 || payload.aperture() >= ApertureService.get(player).count()) return;
 
         switch (payload.action()) {
@@ -73,10 +78,12 @@ public final class ModPayloads {
     }
     private static void impactApertureWall(ImpactApertureWallPayload payload, IPayloadContext context) {
         if (!(context.player() instanceof ServerPlayer player)) return;
+        if (inTyh(player)) return;
         ApertureNourishService.impactWall(player);
     }
     private static void dash(DashPayload payload, IPayloadContext context) {
         if (!(context.player() instanceof ServerPlayer player)) return;
+        if (inTyh(player)) return;
 
         int vertical = payload.vertical();
         int horizontal = payload.horizontal();
@@ -93,6 +100,7 @@ public final class ModPayloads {
     }
     private static void openRefinement(OpenRefinementPayload payload, IPayloadContext context) {
         if (!(context.player() instanceof ServerPlayer player)) return;
+        if (inTyh(player)) return;
         if (!ApertureService.isAwakened(player)) return;
 
         player.openMenu(new SimpleMenuProvider(
@@ -101,6 +109,7 @@ public final class ModPayloads {
     }
     private static void setSecondaryPath(SetSecondaryPathPayload payload, IPayloadContext context) {
         if (!(context.player() instanceof ServerPlayer player)) return;
+        if (inTyh(player)) return;
 
         int aperture = payload.aperture();
         if (aperture < 0 || aperture >= ApertureService.get(player).count()) return;
@@ -109,6 +118,7 @@ public final class ModPayloads {
     }
     private static void openStorage(OpenApertureStoragePayload payload, IPayloadContext context) {
         if (!(context.player() instanceof ServerPlayer player)) return;
+        if (inTyh(player)) return;
 
         int aperture = payload.aperture();
         if (aperture < 0 || aperture >= ApertureService.get(player).count()) return;

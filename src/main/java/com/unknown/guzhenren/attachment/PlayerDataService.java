@@ -5,6 +5,7 @@ import com.unknown.guzhenren.attachment.data.aperture.ApertureData;
 import com.unknown.guzhenren.attachment.data.aperture.ApertureNourishData;
 import com.unknown.guzhenren.attachment.data.aperture.ApertureStorage;
 import com.unknown.guzhenren.attachment.data.body.BodyData;
+import com.unknown.guzhenren.attachment.data.dimension.DimensionReturnData;
 import com.unknown.guzhenren.attachment.data.mind.MindData;
 import com.unknown.guzhenren.attachment.data.path.PathData;
 import com.unknown.guzhenren.attachment.data.path.PathQiData;
@@ -87,9 +88,14 @@ public final class PlayerDataService {
         MindService.onSleepComplete(player);
     }
     public static void onClone(@NotNull Player from, @NotNull Player to, boolean wasDeath, boolean keepInventory) {
-        if (wasDeath && !keepInventory) {
-            dropHumanApertures(from);
-            resetAll(to);
+        if (wasDeath) {
+            if (!keepInventory) {
+                dropHumanApertures(from);
+                resetAll(to);
+            } else {
+                copy(from, to);
+                to.setData(ModAttachments.DIMENSION_RETURN, DimensionReturnData.DEFAULT);
+            }
         } else {
             copy(from, to);
         }
@@ -150,6 +156,7 @@ public final class PlayerDataService {
         to.setData(ModAttachments.STRENGTH, from.getData(ModAttachments.STRENGTH));
         to.setData(ModAttachments.MIND, from.getData(ModAttachments.MIND));
         to.setData(ModAttachments.NOURISH, from.getData(ModAttachments.NOURISH));
+        to.setData(ModAttachments.DIMENSION_RETURN, from.getData(ModAttachments.DIMENSION_RETURN));
         to.setData(ModAttachments.BORN, from.getData(ModAttachments.BORN));
     }
     public static void resetAll(@NotNull Player player) {
@@ -161,6 +168,7 @@ public final class PlayerDataService {
         player.setData(ModAttachments.STRENGTH, PathStrengthData.DEFAULT);
         player.setData(ModAttachments.ESSENCE_CARRY, new float[ApertureData.MAX_APERTURES]);
         player.setData(ModAttachments.NOURISH, ApertureNourishData.DEFAULT);
+        player.setData(ModAttachments.DIMENSION_RETURN, DimensionReturnData.DEFAULT);
         onBirth(player);
 
         player.setData(ModAttachments.BODY,
