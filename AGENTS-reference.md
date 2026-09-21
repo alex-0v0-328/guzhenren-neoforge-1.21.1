@@ -45,7 +45,7 @@
 
 ## 5. 数据模型速查（guzhenren）
 
-五个数据包（aperture/body/soul/path/mind）、**九个 record attachment**，**不可变**；写入只能过服务。data/ 与 service/ 同构五包；qi 与 strength 是 path 包内的子域（力道/气道/宙道皆流派，soul 非流派独立成包）。⚠ **类名以其所在包名为前缀**（path 包内即 `PathQiData`/`PathQiEntry`/`PathStrengthData`/`PathQiService`/`PathStrengthService`）。
+五个数据包（aperture/body/soul/path/mind）、**十个 record attachment**（第十个是维度进出的 `DimensionReturnData`，住 `attachment/data/dimension/`，不属于五包），**不可变**；写入只能过服务。data/ 与 service/ 同构五包（另有 `service/dimension/DimensionTravelService`，宝黄天进出与返回点）；qi 与 strength 是 path 包内的子域（力道/气道/宙道皆流派，soul 非流派独立成包）。⚠ **类名以其所在包名为前缀**（path 包内即 `PathQiData`/`PathQiEntry`/`PathStrengthData`/`PathQiService`/`PathStrengthService`）。
 
 | Attachment         | key                | 存什么                                                                                                                             | sync          | serialize |
 |--------------------|--------------------|------------------------------------------------------------------------------------------------------------------------------------|---------------|-----------|
@@ -58,6 +58,7 @@
 | `STRENGTH`         | `strength_data`    | `Set<BeastStrength>` + 稀疏 `Map<HumanStrength,Integer>`                                                                           | ✅            | ✅        |
 | `QI`               | `qi_data`          | 稀疏 `Map<QiKind, PathQiEntry(amount, holdEndTick)>`；当前量按游戏时刻推算，不逐 tick 写                                           | ✅            | ✅        |
 | `MIND`             | `mind_data`        | brilliance + 密 `Map<WisdomType, MindPool>`（三池永在）                                                                            | ✅            | ✅        |
+| `DIMENSION_RETURN` | `dimension_return` | 锚定维度返回点：原维度 key、精确坐标、朝向、进入前 mayfly/flying；死亡与 reset 清除，退出即消费                                  | ❌            | ✅        |
 
 非 record 两个：`ESSENCE_CARRY`（`float[MAX_APERTURES]`，**既不 sync 也不 serialize**，guzhenren 唯一原地突变）、`BORN`（`Boolean`，出生掷才情的闩；`copy` 必须带它，serialize 不 sync）。
 
@@ -258,10 +259,10 @@ attackDamage = 1 + Σ beast.attackBonus + usableJin × HumanStrength.ATTACK_PER_
 - 心动词与呈现：颜色**只表反馈类别**（绿=变了，红=没变+原因；绝不评价数值）；[GZR] 永远默认色；一个效果服务整条转数阶梯时图标按 amplifier 换（`amplifier = tier()`，图标后缀 = 转数），**别拆成每转一个效果**；不带后缀的旧图留着（vanilla 拼图集要）。HUD 布局 Alex runClient 看过并接受，别擅自"改进"。
   **所有 MobEffect 粒子关闭**（`ModEffects.instance` helper 统一 `showParticles=false, showIcon=true`）；**效果颜色统一白色（`EFFECT_COLOR = 0xFFFFFF`）**，具体颜色表不再是运行真值。
   域强调色唯一真值在 `client/ModPalette`：空窍 `#4FC3F7` · 肉身 `#FFAB91` · 魂魄 `#D388FF` · 流派造诣 `#FFD54F` · 脑海 `#4DD0E1` · 炼蛊 `#81C784`；跨面同义铬色（面板底/边框/槽底/按钮三态/条底边/精炼池蓝）也收 `ModPalette`，单面独用的色留各文件本地。
-- 命令：`command/sub/` 与 attachment 同构五包（aperture/body/soul/path/mind；`CmdPath`/`CmdQi`/`CmdStrength` 在 path 包），**命令树顶级同五包**——`/gzr path` 独立成根。☠ path literal 下 `marks`/`attainment`/`qi`/`strength` **全字面量并排**、`<path>` 参数挂在 marks/attainment 之下——`GuPath` 的 `qi`/`strength` 值与子命令同名，字面量在前防 word 参数被劫持（`/gzr path marks <p> set …`，动词在 `<path>` 之后）。`ModEnumArgument` 是 `word()`，**同义字面量不归并成枚举**（`mind wisdom` 三池是字面量，别"整理"）；嵌套枚举要自己的参数名（`ARG_PATH`/`ARG_KIND`）；`awaken`/`reset` 后必须 `refreshCommands`（`onClone` 是唯一豁免）；`requires()` 是呈现、`applyOnAwakened` 才护数据。☠ `/gzr` 是 redirect，补全器读上文必须走 `getLastChild()`（`ModEnumArgument.get` 已是那个缝；`ModEnumArgumentTest` 守它，别因"没人用"简化掉——指纹是 `/guzhenren …` 好使而 `/gzr …` 不好使）。
+- 命令：`command/sub/` 与 attachment 同构五包（aperture/body/soul/path/mind；`CmdPath`/`CmdQi`/`CmdStrength` 在 path 包），另有跨域子命令直接住 `sub/` 根（`CmdInfo`/`CmdReset`/`CmdTyh`），**命令树顶级同五包**——`/gzr path` 独立成根。☠ path literal 下 `marks`/`attainment`/`qi`/`strength` **全字面量并排**、`<path>` 参数挂在 marks/attainment 之下——`GuPath` 的 `qi`/`strength` 值与子命令同名，字面量在前防 word 参数被劫持（`/gzr path marks <p> set …`，动词在 `<path>` 之后）。`ModEnumArgument` 是 `word()`，**同义字面量不归并成枚举**（`mind wisdom` 三池是字面量，别"整理"）；嵌套枚举要自己的参数名（`ARG_PATH`/`ARG_KIND`）；`awaken`/`reset` 后必须 `refreshCommands`（`onClone` 是唯一豁免）；`requires()` 是呈现、`applyOnAwakened` 才护数据。☠ `/gzr` 是 redirect，补全器读上文必须走 `getLastChild()`（`ModEnumArgument.get` 已是那个缝；`ModEnumArgumentTest` 守它，别因"没人用"简化掉——指纹是 `/guzhenren …` 好使而 `/gzr …` 不好使）。
 - 命令树（只此一张）：
   ```
-  /gzr info  [aperture|body|soul|path|mind] [targets]     /gzr awaken | reset [targets]
+  /gzr info  [aperture|body|soul|path|mind] [targets]     /gzr awaken | reset [targets]     /guworld enter <锚定维度> [targets] · /guworld exit [targets]（世界环境根，allow-list=ModDimensions.ANCHORED_DIMENSIONS，守卫见 wiki《宝黄天》）
   /gzr aperture [1..2] rank|stage|talent set <v>|up|down
   /gzr aperture essence base|current|distilled set|add|sub <n> · essence refill（均可带 [1..2] 窍索引）
   /gzr body physique add|remove <zombie|half_zombie|extreme> · physique extreme set <v>
