@@ -23,9 +23,13 @@ import net.minecraft.world.phys.AABB;
  * ({@link com.unknown.guzhenren.registry.fluid.ModFluids.Source}) re-arms it, because a settled
  * source receives no scheduled ticks on its own.
  *
- * <p>⚠ The four constants below are Alex's picks (2026-09-14), not silent tunables: one stack of
- * primeval stones every 100 ticks per source, never exhausting, pausing while the cap radius
- * already holds a full stack.
+ * <p>⚠ The five constants below are Alex's picks (2026-09-14, player gate 2026-09-23), not silent
+ * tunables: one stack of primeval stones every 100 ticks per source, never exhausting, pausing
+ * while the cap radius already holds a full stack, and producing only while a living non-spectator
+ * player is within 128 blocks -- the natural-mob-spawn horizon, via vanilla
+ * {@code EntityGetter#hasNearbyAlivePlayer} (the spawner-cage pattern, no new wheel). The block
+ * scheduled-tick channel already idles in non-ticking chunks; the explicit gate additionally
+ * covers always-loaded chunks (spawn, forceloaded).
  *
  * @author Alex
  * @version 1.0.0
@@ -37,6 +41,7 @@ public class SpiritSpringBlock extends LiquidBlock {
     public static final int STONES_PER_PRODUCTION = 64;
     public static final double NEARBY_STONES_CAP_RADIUS = 4.0;
     public static final int NEARBY_STONES_CAP = STONES_PER_PRODUCTION;
+    public static final double PRODUCTION_PLAYER_RANGE = 128.0;
 
     public SpiritSpringBlock(FlowingFluid fluid, Properties properties) {
         super(fluid, properties);
@@ -55,10 +60,15 @@ public class SpiritSpringBlock extends LiquidBlock {
     @Override
     protected void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
         if (!level.getFluidState(pos).isSource()) return;
-        if (nearbyStones(level, pos) < NEARBY_STONES_CAP) {
+        boolean playerNear = level.hasNearbyAlivePlayer(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5,
+                PRODUCTION_PLAYER_RANGE);
+        if (shouldProduce(playerNear, nearbyStones(level, pos))) {
             produceStones(level, pos, random);
         }
         scheduleProduction(level, pos);
+    }
+    static boolean shouldProduce(boolean playerNear, int nearbyStones) {
+        return playerNear && nearbyStones < NEARBY_STONES_CAP;
     }
     private void scheduleProduction(Level level, BlockPos pos) {
         if (level.isClientSide() || !level.getFluidState(pos).isSource()) return;

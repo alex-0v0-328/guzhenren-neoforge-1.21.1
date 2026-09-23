@@ -34,6 +34,7 @@ import com.unknown.guzhenren.registry.entity.ModEntityTypes;
 import com.unknown.guzhenren.registry.fluid.ModFluids;
 import com.unknown.guzhenren.registry.item.ModDataComponents;
 import com.unknown.guzhenren.registry.item.ModItems;
+import com.unknown.guzhenren.world.SpiritSpringFeature;
 import io.netty.channel.embedded.EmbeddedChannel;
 import java.util.ArrayList;
 import java.util.List;
@@ -57,6 +58,8 @@ import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.SlabBlock;
+import net.minecraft.world.level.block.state.properties.SlabType;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
@@ -116,10 +119,82 @@ public final class ModGameTests {
         BlockPos spring = CENTER;
         helper.setBlock(spring.below(), Blocks.STONE);
         helper.setBlock(spring, ModBlocks.SPIRIT_SPRING.get());
+        ServerPlayer player = survivalMock(helper, null, true);
+        BlockPos absoluteSpring = helper.absolutePos(spring);
+        player.setPos(absoluteSpring.getX() + 0.5, absoluteSpring.getY() + 1.0, absoluteSpring.getZ() + 0.5);
         helper.succeedWhen(() -> {
             int stones = SpiritSpringBlock.nearbyStones(helper.getLevel(), helper.absolutePos(spring));
             helper.assertTrue(stones >= SpiritSpringBlock.STONES_PER_PRODUCTION, "first batch of stones spawned");
             helper.assertTrue(stones <= SpiritSpringBlock.NEARBY_STONES_CAP, "the cap pauses further batches");
+        });
+    }
+
+    @GameTest(template = "empty9x9x9", timeoutTicks = 100)
+    public static void spiritSpringStructurePlacesPerSpec(GameTestHelper helper) {
+        // Ground level y=1: dirt inside the 7x7 (the original terrain x cells must keep), stone
+        // subsurface at y=0. The structure center column is (4,1,4); layer one lands at y=0.
+        for (int x = 0; x <= 8; x++) {
+            for (int z = 0; z <= 8; z++) helper.setBlock(new BlockPos(x, 0, z), Blocks.STONE);
+        }
+        for (int x = 1; x <= 7; x++) {
+            for (int z = 1; z <= 7; z++) helper.setBlock(new BlockPos(x, 1, z), Blocks.DIRT);
+        }
+        // Vegetation anchored to the original dirt: above a slab cell, above a full-block cell,
+        // two high above a rim cell, and above an x cell (that one must survive).
+        helper.setBlock(new BlockPos(2, 2, 4), Blocks.SHORT_GRASS);
+        helper.setBlock(new BlockPos(1, 2, 3), Blocks.SHORT_GRASS);
+        helper.setBlock(new BlockPos(3, 3, 1), Blocks.SHORT_GRASS);
+        helper.setBlock(new BlockPos(1, 2, 1), Blocks.SHORT_GRASS);
+        SpiritSpringFeature.placeStructure(helper.getLevel(), helper.absolutePos(CENTER));
+        helper.assertBlockState(CENTER.below(), state -> state.is(Blocks.CALCITE),
+                () -> "layer-one center must be calcite");
+        helper.assertBlockState(new BlockPos(3, 0, 1), state -> state.is(Blocks.MOSSY_COBBLESTONE),
+                () -> "layer-one (t) must be mossy cobblestone");
+        helper.assertBlockState(new BlockPos(1, 0, 1), state -> state.is(Blocks.STONE),
+                () -> "layer-one (x) must keep the original terrain");
+        helper.assertBlockState(CENTER, state -> state.is(Blocks.CALCITE),
+                () -> "layer-two center must be the calcite pillar");
+        helper.assertBlockState(new BlockPos(1, 1, 3), state -> state.is(Blocks.COBBLESTONE),
+                () -> "layer-two (y) must be cobblestone");
+        helper.assertBlockState(new BlockPos(1, 1, 1), state -> state.is(Blocks.DIRT),
+                () -> "layer-two outer (x) must keep the original terrain");
+        helper.assertBlockState(new BlockPos(6, 1, 1), state -> state.is(Blocks.DIRT),
+                () -> "layer-two outer (x) must keep the original terrain");
+        helper.assertBlockState(new BlockPos(3, 1, 3), state -> state.isAir(),
+                () -> "the basin well around the pillar must be cleared to air");
+        helper.assertBlockState(new BlockPos(4, 1, 3), state -> state.isAir(),
+                () -> "the basin well around the pillar must be cleared to air");
+        helper.assertBlockState(new BlockPos(2, 2, 4), state -> state.isAir(),
+                () -> "grass above a slab cell must be cleared");
+        helper.assertBlockState(new BlockPos(1, 2, 3), state -> state.isAir(),
+                () -> "grass above a full-block cell must be cleared");
+        helper.assertBlockState(new BlockPos(3, 3, 1), state -> state.isAir(),
+                () -> "grass two cells above ground must be cleared");
+        helper.assertBlockState(new BlockPos(1, 2, 1), state -> state.is(Blocks.SHORT_GRASS),
+                () -> "grass above an x cell must survive");
+        helper.assertBlockState(new BlockPos(3, 1, 2),
+                state -> state.is(Blocks.MOSSY_COBBLESTONE_SLAB)
+                        && state.getValue(SlabBlock.TYPE) == SlabType.BOTTOM,
+                () -> "layer-two (t1) must be a bottom mossy cobblestone slab");
+        helper.assertBlockState(new BlockPos(6, 1, 5),
+                state -> state.is(Blocks.COBBLESTONE_SLAB)
+                        && state.getValue(SlabBlock.TYPE) == SlabType.BOTTOM,
+                () -> "layer-two (y1) must be a bottom cobblestone slab");
+        helper.assertBlockState(CENTER.above(),
+                state -> state.is(ModBlocks.SPIRIT_SPRING.get()) && state.getFluidState().isSource(),
+                () -> "the third layer must be the spirit spring source");
+        helper.succeedWhen(() -> {
+            helper.assertBlockState(new BlockPos(3, 1, 3),
+                    state -> state.getFluidState().getType() == ModFluids.FLOWING_SPIRIT_SPRING.get()
+                            && !state.getFluidState().isSource(),
+                    () -> "the streams must fill the calcite basin, but is "
+                            + helper.getLevel().getBlockState(helper.absolutePos(new BlockPos(3, 1, 3))));
+            helper.assertBlockState(new BlockPos(0, 1, 4), state -> state.getFluidState().isEmpty(),
+                    () -> "the rim must hold the water, nothing flows outside, but is "
+                            + helper.getLevel().getBlockState(helper.absolutePos(new BlockPos(0, 1, 4))));
+            helper.assertBlockState(new BlockPos(1, 2, 4), state -> state.getFluidState().isEmpty(),
+                    () -> "no sheet may spill over the rim at spring height, but is "
+                            + helper.getLevel().getBlockState(helper.absolutePos(new BlockPos(1, 2, 4))));
         });
     }
     @GameTest(template = "empty9x9x9", timeoutTicks = 100)
