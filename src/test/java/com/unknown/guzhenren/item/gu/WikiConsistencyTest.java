@@ -38,10 +38,10 @@ import org.junit.jupiter.api.Test;
 
 class WikiConsistencyTest {
 
-    private static final String ITEMS_PAGE = "玩家向/蛊真人MOD 1.0.0 蛊材&蛊虫.md";
-    private static final String APERTURE_PAGE = "玩家向/蛊真人MOD 1.0.0 空窍.md";
-    private static final String MIND_PAGE = "玩家向/蛊真人MOD 1.0.0 脑海.md";
-    private static final String TIME_PAGE = "玩家向/蛊真人MOD 1.0.0 时间与时间戳总表.md";
+    private static final String ITEMS_PAGE = "玩家向/蛊真人MOD 1.0.0 蛊材、蛊虫与炼蛊.md";
+    private static final String APERTURE_PAGE = "玩家向/蛊真人MOD 1.0.0 角色.md";
+    private static final String MIND_PAGE = "玩家向/蛊真人MOD 1.0.0 角色.md";
+    private static final String TIME_PAGE = "玩家向/蛊真人MOD 1.0.0 总表.md";
     private static final String TEST_PAGE = "开发向/工程/测试集.md";
     private static final List<String> ONE_SHOT_HEADERS = List.of("蛊", "数量", "转", "道", "炼化真元", "效果");
     private static final List<String> CHANNEL_HEADERS = List.of("蛊", "转", "炼化", "真元 / 轮", "饱食", "食物",

@@ -20,7 +20,7 @@ final class RingGeometry {
     private RingGeometry() {}
     /** Canvas width of the largest hand-drawn ring; every frame's world size scales off it. */
     static final int LARGEST_CANVAS = 23;
-    /** World span of the largest ring, in blocks (TODO总表 acceptance: max ~2.2 blocks across). */
+    /** World span of the largest ring, in blocks (总表 TODO acceptance: max ~2.2 blocks across). */
     static final float LARGEST_RING_SPAN = 2.2F;
     /** Direction shorter than this is treated as "no direction" and falls back to GROUND. */
     private static final float MIN_DIRECTION_LENGTH = 1.0E-4F;

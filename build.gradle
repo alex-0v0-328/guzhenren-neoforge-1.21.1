@@ -201,10 +201,9 @@ tasks.named('test', Test) {
             def wikiRoot = file(configuredWikiDir)
             systemProperty 'gzr.wikiDir', wikiRoot.absolutePath
             inputs.files([
-                    '玩家向/蛊真人MOD 1.0.0 蛊材&蛊虫.md',
-                    '玩家向/蛊真人MOD 1.0.0 空窍.md',
-                    '玩家向/蛊真人MOD 1.0.0 脑海.md',
-                    '玩家向/蛊真人MOD 1.0.0 时间与时间戳总表.md',
+                    '玩家向/蛊真人MOD 1.0.0 蛊材、蛊虫与炼蛊.md',
+                    '玩家向/蛊真人MOD 1.0.0 角色.md',
+                    '玩家向/蛊真人MOD 1.0.0 总表.md',
                     '开发向/工程/测试集.md'
             ].collect { new File(wikiRoot, it) })
             inputs.files(fileTree('src/pureTest/java'), fileTree('src/test/java'),
