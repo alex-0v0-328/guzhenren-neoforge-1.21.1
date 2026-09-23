@@ -45,14 +45,17 @@ repo/
 .codegraph/
 .mimosa/
 
-### Agent tooling: local-only, kept out of the repository (Alex, 2026-09-19) ###
+### Agent tooling: local-only, kept out of the repository (Alex, 2026-09-19; rules layer added 2026-09-22) ###
 .zcode/
 .codex/
 .agents/
 .kimi-code/
 .zcodeignore
+AGENTS.md
+AGENTS-reference.md
+rules/
 
-### Local-only tool scripts: new files under tools/ stay untracked; already-tracked tools stay in the repo (Alex, 2026-09-20) ###
+### Local-only tool scripts: everything under tools/ stays untracked; the four legacy tracked tools were untracked 2026-09-23 (Alex, 2026-09-20; updated 2026-09-23) ###
 tools/
 
 ### Python export tools ###
