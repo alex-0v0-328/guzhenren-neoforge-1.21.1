@@ -1,6 +1,7 @@
 package com.unknown.guzhenren;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.unknown.guzhenren.attachment.data.aperture.Aperture;
 import com.unknown.guzhenren.attachment.data.body.BodyData;
@@ -13,6 +14,7 @@ import com.unknown.guzhenren.custom.enums.path.GuPath;
 import com.unknown.guzhenren.serialization.ModStreamCodecs;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
+import io.netty.handler.codec.DecoderException;
 import java.util.Set;
 import net.minecraft.network.codec.ByteBufCodecs;
 import org.junit.jupiter.api.DisplayName;
@@ -58,6 +60,31 @@ class DataStreamCodecTest {
             ByteBufCodecs.BOOL.encode(buffer, expected.second());
             assertEquals(expected, Aperture.STREAM_CODEC.decode(buffer));
             assertEquals(0, buffer.readableBytes());
+        } finally {
+            buffer.release();
+        }
+    }
+    @Test
+    @DisplayName("Enum codecs reject out-of-range and negative ordinals as malformed packets")
+    void enumCodecsRejectOutOfRangeOrdinals() {
+        ByteBuf buffer = Unpooled.buffer();
+        try {
+            ByteBufCodecs.VAR_INT.encode(buffer, Rank.values().length);
+            assertThrows(DecoderException.class, () -> ModStreamCodecs.ofEnum(Rank.class).decode(buffer));
+            buffer.clear();
+            ByteBufCodecs.VAR_INT.encode(buffer, -1);
+            assertThrows(DecoderException.class, () -> ModStreamCodecs.ofEnum(Rank.class).decode(buffer));
+            buffer.clear();
+            ByteBufCodecs.VAR_INT.encode(buffer, GuPath.values().length + 1);
+            assertThrows(DecoderException.class, () -> ModStreamCodecs.ofNullableEnum(GuPath.class).decode(buffer));
+            buffer.clear();
+            ByteBufCodecs.VAR_INT.encode(buffer, -1);
+            assertThrows(DecoderException.class, () -> ModStreamCodecs.readNullableEnum(buffer, GuPath.class));
+            buffer.clear();
+
+            GuPath last = GuPath.values()[GuPath.values().length - 1];
+            ByteBufCodecs.VAR_INT.encode(buffer, GuPath.values().length);
+            assertEquals(last, ModStreamCodecs.ofNullableEnum(GuPath.class).decode(buffer));
         } finally {
             buffer.release();
         }

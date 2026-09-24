@@ -1,6 +1,7 @@
 package com.unknown.guzhenren.serialization;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.handler.codec.DecoderException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -20,6 +21,9 @@ import org.jetbrains.annotations.Nullable;
  * <p>⚠ A nullable enum travels as its ordinal plus one, with zero meaning unset. No enum here has a
  * NONE constant to lean on, so this is where "has not chosen" becomes representable on the wire.
  *
+ * <p>⚠ Decoding rejects an out-of-range ordinal with a {@code DecoderException}: the client-intent
+ * payloads read enums through these codecs, so a forged ordinal must fail as a malformed packet.
+ *
  * @author Alex
  * @version 1.0.0
  * @since 1.0.0
@@ -30,11 +34,11 @@ public final class ModStreamCodecs {
     private ModStreamCodecs() {}
     public static <E extends Enum<E>> StreamCodec<ByteBuf, E> ofEnum(Class<E> type) {
         E[] values = type.getEnumConstants();
-        return ByteBufCodecs.VAR_INT.map(ordinal -> values[ordinal], Enum::ordinal);
+        return ByteBufCodecs.VAR_INT.map(ordinal -> byOrdinal(type, values, ordinal), Enum::ordinal);
     }
     public static <E extends Enum<E>> StreamCodec<ByteBuf, @Nullable E> ofNullableEnum(Class<E> type) {
         E[] values = type.getEnumConstants();
-        return ByteBufCodecs.VAR_INT.map(i -> i == 0 ? null : values[i - 1],
+        return ByteBufCodecs.VAR_INT.map(i -> i == 0 ? null : byOrdinal(type, values, i - 1),
                 value -> value == null ? 0 : value.ordinal() + 1);
     }
     public static <E extends Enum<E>> void writeNullableEnum(ByteBuf buf, @Nullable E value) {
@@ -42,7 +46,16 @@ public final class ModStreamCodecs {
     }
     public static <E extends Enum<E>> @Nullable E readNullableEnum(ByteBuf buf, Class<E> type) {
         int i = ByteBufCodecs.VAR_INT.decode(buf);
-        return i == 0 ? null : type.getEnumConstants()[i - 1];
+        return i == 0 ? null : byOrdinal(type, type.getEnumConstants(), i - 1);
+    }
+    // Client-intent payloads decode through here, and a forged packet can carry any VAR_INT. Rejecting it
+    // as a malformed packet disconnects the sender with a readable reason instead of a bare AIOOBE.
+    private static <E extends Enum<E>> E byOrdinal(Class<E> type, E[] values, int ordinal) {
+        if (ordinal < 0 || ordinal >= values.length) {
+            throw new DecoderException(type.getSimpleName() + " ordinal " + ordinal + " is outside 0.."
+                    + (values.length - 1));
+        }
+        return values[ordinal];
     }
     public static <K extends Enum<K>, V> StreamCodec<ByteBuf, Map<K, V>> enumMap(
             Class<K> key, StreamCodec<ByteBuf, V> value) {
