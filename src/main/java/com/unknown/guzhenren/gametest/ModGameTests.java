@@ -2,10 +2,12 @@ package com.unknown.guzhenren.gametest;
 
 import com.mojang.authlib.GameProfile;
 import com.unknown.guzhenren.Guzhenren;
+import com.unknown.guzhenren.Ticks;
 import com.unknown.guzhenren.attachment.PlayerDataService;
 import com.unknown.guzhenren.attachment.data.aperture.ApertureData;
 import com.unknown.guzhenren.attachment.data.aperture.ApertureNourishData;
 import com.unknown.guzhenren.attachment.data.aperture.ApertureStorage;
+import com.unknown.guzhenren.attachment.data.aperture.PendingVitalPenalties;
 import com.unknown.guzhenren.attachment.service.aperture.ApertureNourishService;
 import com.unknown.guzhenren.attachment.service.aperture.AperturePressureExplosionTask;
 import com.unknown.guzhenren.attachment.service.aperture.ApertureService;
@@ -20,6 +22,7 @@ import com.unknown.guzhenren.custom.enums.aperture.Rank;
 import com.unknown.guzhenren.custom.enums.body.ExtremePhysique;
 import com.unknown.guzhenren.custom.enums.body.Physique;
 import com.unknown.guzhenren.custom.enums.path.GuPath;
+import com.unknown.guzhenren.custom.enums.wisdom.WisdomType;
 import com.unknown.guzhenren.display.InfoModel;
 import com.unknown.guzhenren.entity.BoarGuEntity;
 import com.unknown.guzhenren.entity.FlyingGuEntity;
@@ -40,6 +43,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
@@ -657,6 +661,94 @@ public final class ModGameTests {
     }
     private static int storedCount(ServerPlayer player, int aperture) {
         return ApertureStorageService.items(player, aperture).stream().mapToInt(ItemStack::getCount).sum();
+    }
+    @GameTest(template = "empty9x9x9", timeoutTicks = 100)
+    public static void offlineVitalGuDeathIsRecordedAndSurvivesSave(GameTestHelper helper) {
+        ServerPlayer holder = survivalMock(helper, null, true);
+        UUID offlineOwner = UUID.randomUUID();
+        PendingVitalPenalties ledger = PendingVitalPenalties.get(helper.getLevel().getServer());
+
+        TendedGuItem.starved(holder, vitalOwnedBy(offlineOwner, ApertureData.PRIMARY));
+        helper.assertValueEqual(ledger.count(offlineOwner), 1, "offline owner's vital loss recorded");
+
+        RegistryAccess registries = helper.getLevel().registryAccess();
+        PendingVitalPenalties reloaded = PendingVitalPenalties.load(
+                ledger.save(new CompoundTag(), registries), registries);
+        ItemStack restored = reloaded.poll(offlineOwner);
+        helper.assertTrue(restored != null && restored.is(ModItems.WHITE_BOAR_GU.get())
+                && offlineOwner.equals(GuItem.owner(restored)), "pending loss survives a save/load round trip");
+        ledger.poll(offlineOwner);
+        helper.assertValueEqual(ledger.count(offlineOwner), 0, "ledger drained");
+        helper.succeed();
+    }
+    @GameTest(template = "empty9x9x9", timeoutTicks = 100)
+    public static void offlineVitalPenaltyWaitsOutSpawnInvulnerability(GameTestHelper helper) {
+        ServerPlayer owner = survivalMock(helper, null, true);
+        ApertureService.awaken(owner, 80);
+        PendingVitalPenalties ledger = PendingVitalPenalties.get(helper.getLevel().getServer());
+        ledger.record(owner.getUUID(), vitalOwnedBy(owner.getUUID(), ApertureData.PRIMARY));
+
+        PlayerDataService.settleOfflineVitalLoss(owner);
+        serverTicks(owner, PlayerDataService.OFFLINE_VITAL_SETTLE_AFTER_TICKS);
+        helper.assertValueEqual(owner.tickCount, PlayerDataService.OFFLINE_VITAL_SETTLE_AFTER_TICKS, "tick count");
+        helper.assertValueEqual(ledger.count(owner.getUUID()), 1,
+                "nothing settles at login or on the heartbeats inside spawn invulnerability");
+        ledger.poll(owner.getUUID());
+        helper.succeed();
+    }
+    @GameTest(template = "empty9x9x9", timeoutTicks = 100)
+    public static void offlineVitalPenaltiesSettleOnePerHeartbeat(GameTestHelper helper) {
+        List<Component> inbox = new ArrayList<>();
+        ServerPlayer owner = survivalMock(helper, inbox, true);
+        ApertureService.awaken(owner, 80);
+        serverTicks(owner, PlayerDataService.OFFLINE_VITAL_SETTLE_AFTER_TICKS);
+        SoulService.setMax(owner, 1_000L);
+        SoulService.setCurrent(owner, 1_000L);
+        for (WisdomType type : WisdomType.values()) {
+            MindService.setMax(owner, type, 1_000_000L);
+            MindService.setCurrent(owner, type, 1_000_000L);
+        }
+        ApertureService.setPrimaryPath(owner, ApertureData.PRIMARY, GuPath.TIME);
+        PendingVitalPenalties ledger = PendingVitalPenalties.get(helper.getLevel().getServer());
+        ledger.record(owner.getUUID(), vitalOwnedBy(owner.getUUID(), ApertureData.PRIMARY));
+        ledger.record(owner.getUUID(), vitalOwnedBy(owner.getUUID(), ApertureData.PRIMARY));
+        float healthBefore = owner.getHealth();
+
+        serverTicks(owner, Ticks.SECOND);
+        helper.assertValueEqual(owner.tickCount, 80, "first heartbeat past spawn invulnerability");
+        helper.assertValueEqual(ledger.count(owner.getUUID()), 1, "one loss settles on the first heartbeat");
+        helper.assertValueEqual(SoulService.get(owner).currentSoul(), 500L, "first settle halves the soul");
+        for (WisdomType type : WisdomType.values()) {
+            helper.assertTrue(MindService.current(owner, type) < 1_000_000L, "first settle halves " + type);
+        }
+        helper.assertTrue(owner.getHealth() < healthBefore * 0.5F, "first settle's hurt landed");
+        helper.assertTrue(ApertureService.aperture(owner, ApertureData.PRIMARY).primaryPath() == null,
+                "first settle clears the bound aperture's primary path");
+        helper.assertValueEqual(messages(inbox, "guzhenren.item.gu.vital_lost").size(), 1, "one loss message");
+        float healthAfterFirst = owner.getHealth();
+
+        serverTicks(owner, Ticks.SECOND);
+        helper.assertValueEqual(ledger.count(owner.getUUID()), 0, "second loss settles on the next heartbeat");
+        helper.assertValueEqual(SoulService.get(owner).currentSoul(), 250L, "second settle halves again");
+        helper.assertTrue(owner.getHealth() < healthAfterFirst, "second hurt cleared the hurt cooldown");
+        helper.assertValueEqual(messages(inbox, "guzhenren.item.gu.vital_lost").size(), 2, "two loss messages");
+        helper.succeed();
+    }
+    // One real server tick, as ServerLevel.tickNonPassenger and the connection run it: the level bumps
+    // tickCount and calls tick() (spawn invulnerability counts down there); doTick() runs Player.tick, which
+    // fires PlayerTickEvent -- the heartbeat. A test body runs inside one game tick, so it replays them here.
+    private static void serverTicks(ServerPlayer player, int ticks) {
+        for (int tick = 0; tick < ticks; tick++) {
+            player.tickCount++;
+            player.tick();
+            player.doTick();
+        }
+    }
+    private static ItemStack vitalOwnedBy(UUID owner, int aperture) {
+        ItemStack vital = new ItemStack(ModItems.WHITE_BOAR_GU.get());
+        vital.set(ModDataComponents.VITAL_OWNER.get(), owner);
+        vital.set(ModDataComponents.VITAL_APERTURE.get(), aperture);
+        return vital;
     }
     private static ServerPlayer storagePlayer(GameTestHelper helper) {
         ServerPlayer player = survivalMock(helper, null, true);

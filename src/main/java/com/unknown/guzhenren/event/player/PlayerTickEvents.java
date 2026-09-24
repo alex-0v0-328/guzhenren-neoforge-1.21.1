@@ -1,6 +1,7 @@
 package com.unknown.guzhenren.event.player;
 
 import com.unknown.guzhenren.Guzhenren;
+import com.unknown.guzhenren.attachment.PlayerDataService;
 import com.unknown.guzhenren.attachment.service.aperture.ApertureEssenceService;
 import com.unknown.guzhenren.attachment.service.aperture.ApertureNourishService;
 import com.unknown.guzhenren.attachment.service.aperture.ApertureService;
@@ -58,6 +59,7 @@ public final class PlayerTickEvents {
         ApertureStorageTick.tickStored(player, days);
 
         if (days > 0L && player.containerMenu instanceof ApertureStorageMenu menu) menu.reload();
+        PlayerDataService.settleOfflineVitalLoss(player);
 
         closeDistilling(player);
         tickHalfZombie(player);

@@ -502,6 +502,7 @@ public abstract class TendedGuItem extends MortalGuItem {
 
         ServerPlayer owner = holder.server.getPlayerList().getPlayer(uuid);
         if (owner != null) PlayerDataService.onVitalGuLost(owner, stack);
+        else PlayerDataService.recordOfflineVitalLoss(holder.server, uuid, stack);
     }
     public static void starved(ServerPlayer holder, ItemStack s) {died(holder, s, MSG_STARVED);}
     public static void exhausted(ServerPlayer holder, ItemStack s) {died(holder, s, MSG_EXHAUSTED);}

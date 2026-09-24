@@ -4,6 +4,7 @@ import com.unknown.guzhenren.attachment.data.aperture.Aperture;
 import com.unknown.guzhenren.attachment.data.aperture.ApertureData;
 import com.unknown.guzhenren.attachment.data.aperture.ApertureNourishData;
 import com.unknown.guzhenren.attachment.data.aperture.ApertureStorage;
+import com.unknown.guzhenren.attachment.data.aperture.PendingVitalPenalties;
 import com.unknown.guzhenren.attachment.data.body.BodyData;
 import com.unknown.guzhenren.attachment.data.dimension.DimensionReturnData;
 import com.unknown.guzhenren.attachment.data.mind.MindData;
@@ -27,7 +28,9 @@ import com.unknown.guzhenren.registry.attachment.ModAttachments;
 import com.unknown.guzhenren.registry.damage.ModDamageTypes;
 import com.unknown.guzhenren.registry.item.ModDataComponents;
 import com.unknown.guzhenren.registry.item.ModItems;
+import java.util.UUID;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
@@ -55,6 +58,7 @@ import org.jetbrains.annotations.NotNull;
 public final class PlayerDataService {
 
     private static final String VITAL_LOST = "guzhenren.item.gu.vital_lost";
+    public static final int OFFLINE_VITAL_SETTLE_AFTER_TICKS = 60;
     private PlayerDataService() {}
     public static void onJoin(@NotNull ServerPlayer player) {
         if (!player.getData(ModAttachments.BORN)) onBirth(player);
@@ -145,6 +149,18 @@ public final class PlayerDataService {
 
         int bound = stack.getOrDefault(ModDataComponents.VITAL_APERTURE.get(), ApertureData.PRIMARY);
         ApertureService.setPrimaryPath(owner, bound, null);
+    }
+    public static void recordOfflineVitalLoss(@NotNull MinecraftServer server, @NotNull UUID owner,
+            @NotNull ItemStack stack) {
+        PendingVitalPenalties.get(server).record(owner, stack);
+    }
+    // Waits out vanilla's 60-tick spawn invulnerability, which would swallow the 80% hurt, and settles one
+    // lost Gu per heartbeat so the next hurt clears the 10-tick hurt cooldown.
+    public static void settleOfflineVitalLoss(@NotNull ServerPlayer player) {
+        if (player.tickCount <= OFFLINE_VITAL_SETTLE_AFTER_TICKS) return;
+
+        ItemStack lost = PendingVitalPenalties.get(player.server).poll(player.getUUID());
+        if (lost != null) onVitalGuLost(player, lost);
     }
     private static void copy(@NotNull Player from, @NotNull Player to) {
         to.setData(ModAttachments.APERTURE, from.getData(ModAttachments.APERTURE));
