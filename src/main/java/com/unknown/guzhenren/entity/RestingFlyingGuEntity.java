@@ -77,9 +77,11 @@ public abstract class RestingFlyingGuEntity extends FlyingGuEntity {
     }
 
     public void takeOff() {
+        // Only a resting Gu has closed its wing cases; an aborted landing is still in the flight pose.
+        boolean grounded = phase() == FlightPhase.RESTING;
         setPhase(FlightPhase.FLYING);
         entityData.set(DATA_WANTS_TO_LAND, false);
-        if (!level().isClientSide()) playTakeoffAnimation();
+        if (grounded && !level().isClientSide()) playTakeoffAnimation();
     }
 
     private void setPhase(FlightPhase next) {
@@ -99,9 +101,9 @@ public abstract class RestingFlyingGuEntity extends FlyingGuEntity {
         FlightPhase savedPhase = FlightPhase.fromId(tag.getByte("FlightPhase"));
         entityData.set(DATA_FLIGHT_PHASE, savedPhase.id());
         boolean wantsToLand = tag.getBoolean("WantsToLand");
-        // Goal state is not serialized. Re-arm a saved ground state so the new entity can enter the
-        // landing goal and rebuild its rest timer instead of remaining permanently idle after reload.
-        if (savedPhase != FlightPhase.FLYING) wantsToLand = true;
+        // Goal state is not serialized. A saved landing re-arms its request so the landing goal picks it up
+        // again; a saved rest is resumed by that goal directly, without replaying the landing.
+        if (savedPhase == FlightPhase.LANDING) wantsToLand = true;
         entityData.set(DATA_WANTS_TO_LAND, wantsToLand);
     }
 

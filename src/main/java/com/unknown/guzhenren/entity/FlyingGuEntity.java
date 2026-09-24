@@ -71,8 +71,12 @@ public class FlyingGuEntity extends WildGuEntity {
     public @Nullable Player seekTarget() {
         return level().getNearestPlayer(getX(), getY(), getZ(), DETECT_RANGE, this::wanted);
     }
+    /** The same test for starting and for keeping a target, so a player who turns spectator or leaves is let go. */
+    public boolean wants(Player player) {
+        return player.level() == level() && !player.isSpectator() && seeks(player);
+    }
     private boolean wanted(Entity entity) {
-        return entity instanceof Player player && !player.isSpectator() && seeks(player);
+        return entity instanceof Player player && wants(player);
     }
     //endregion
 

@@ -47,26 +47,11 @@ public final class ModEntityTypes {
                     .clientTrackingRange(TRACKING_CHUNKS)
                     .build("hope_gu_entity"));
     public static final DeferredHolder<EntityType<?>, EntityType<BoarGuEntity>> WHITE_BOAR_GU_ENTITY =
-            ENTITY_TYPES.register("white_boar_gu_entity", () -> EntityType.Builder
-                    .<BoarGuEntity>of((type, level) -> new BoarGuEntity(type, level, ModItems.WHITE_BOAR_GU),
-                            MobCategory.AMBIENT)
-                    .sized(MOTE_WIDTH, MOTE_HEIGHT)
-                    .clientTrackingRange(TRACKING_CHUNKS)
-                    .build("white_boar_gu_entity"));
+            boarGu("white_boar_gu_entity", ModItems.WHITE_BOAR_GU);
     public static final DeferredHolder<EntityType<?>, EntityType<BoarGuEntity>> BLACK_BOAR_GU_ENTITY =
-            ENTITY_TYPES.register("black_boar_gu_entity", () -> EntityType.Builder
-                    .<BoarGuEntity>of((type, level) -> new BoarGuEntity(type, level, ModItems.BLACK_BOAR_GU),
-                            MobCategory.AMBIENT)
-                    .sized(MOTE_WIDTH, MOTE_HEIGHT)
-                    .clientTrackingRange(TRACKING_CHUNKS)
-                    .build("black_boar_gu_entity"));
+            boarGu("black_boar_gu_entity", ModItems.BLACK_BOAR_GU);
     public static final DeferredHolder<EntityType<?>, EntityType<BoarGuEntity>> FLOWER_BOAR_GU_ENTITY =
-            ENTITY_TYPES.register("flower_boar_gu_entity", () -> EntityType.Builder
-                    .<BoarGuEntity>of((type, level) -> new BoarGuEntity(type, level, ModItems.FLOWER_BOAR_GU),
-                            MobCategory.AMBIENT)
-                    .sized(MOTE_WIDTH, MOTE_HEIGHT)
-                    .clientTrackingRange(TRACKING_CHUNKS)
-                    .build("flower_boar_gu_entity"));
+            boarGu("flower_boar_gu_entity", ModItems.FLOWER_BOAR_GU);
     public static final DeferredHolder<EntityType<?>, EntityType<RhinocerosBeetleGuEntity>> HORIZONTAL_CRASH_GU_ENTITY =
             beetle("horizontal_crash_gu_entity", ModItems.HORIZONTAL_CRASH_GU);
     public static final DeferredHolder<EntityType<?>, EntityType<RhinocerosBeetleGuEntity>> VERTICAL_CRASH_GU_ENTITY =
@@ -81,6 +66,13 @@ public final class ModEntityTypes {
                     .sized(WILD_BOAR_WIDTH, WILD_BOAR_HEIGHT)
                     .clientTrackingRange(TRACKING_CHUNKS)
                     .build("wild_boar"));
+    private static DeferredHolder<EntityType<?>, EntityType<BoarGuEntity>> boarGu(String name, Supplier<Item> caughtGu) {
+        return ENTITY_TYPES.register(name, () -> EntityType.Builder
+                .<BoarGuEntity>of((type, level) -> new BoarGuEntity(type, level, caughtGu), MobCategory.AMBIENT)
+                .sized(MOTE_WIDTH, MOTE_HEIGHT)
+                .clientTrackingRange(TRACKING_CHUNKS)
+                .build(name));
+    }
     private static DeferredHolder<EntityType<?>, EntityType<RhinocerosBeetleGuEntity>> beetle(
             String name, Supplier<Item> caughtGu) {
         return ENTITY_TYPES.register(name, () -> EntityType.Builder

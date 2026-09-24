@@ -9,7 +9,6 @@ import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.animation.AnimatableManager;
 import software.bernie.geckolib.animation.AnimationController;
-import software.bernie.geckolib.animation.PlayState;
 import software.bernie.geckolib.animation.RawAnimation;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
@@ -17,9 +16,10 @@ import software.bernie.geckolib.util.GeckoLibUtil;
  * A wild boar Gu [野生豕蛊] that wanders freely instead of seeking players.
  *
  * <p>The shared {@link RestingFlyingGuEntity} lifecycle supplies the three movement goals and the
- * synchronized flight phase. This entity keeps its existing GeckoLib animation names and transition
- * triggers: {@code takeoff} plays once before the phase handler loops {@code fly}, while {@code land}
- * plays once as the phase handler enters {@code RESTING}.
+ * synchronized flight phase; the white, black and flower variants differ only in their caught item and
+ * renderer texture. The ladybug model's animation contract is {@code animation.idle} while resting,
+ * {@code animation.lift} for 0.8 seconds followed by looping {@code animation.fly}, and
+ * {@code animation.land} for 0.8 seconds followed by looping {@code animation.idle}.
  *
  * @author Alex
  * @version 1.0.0
@@ -28,12 +28,14 @@ import software.bernie.geckolib.util.GeckoLibUtil;
 
 public class BoarGuEntity extends RestingFlyingGuEntity implements GeoEntity {
 
+    private static final RawAnimation IDLE_ANIM =
+            RawAnimation.begin().thenLoop("animation.idle");
     private static final RawAnimation FLY_ANIM =
-            RawAnimation.begin().thenLoop("animation.boar_gu.fly");
+            RawAnimation.begin().thenLoop("animation.fly");
+    private static final RawAnimation LIFT_ANIM =
+            RawAnimation.begin().thenPlay("animation.lift");
     private static final RawAnimation LAND_ANIM =
-            RawAnimation.begin().thenPlay("animation.boar_gu.land");
-    private static final RawAnimation TAKEOFF_ANIM =
-            RawAnimation.begin().thenPlay("animation.boar_gu.takeoff");
+            RawAnimation.begin().thenPlay("animation.land");
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
 
     public BoarGuEntity(EntityType<? extends BoarGuEntity> type, Level level, Supplier<Item> caughtGu) {
@@ -47,16 +49,14 @@ public class BoarGuEntity extends RestingFlyingGuEntity implements GeoEntity {
     protected void playLandingAnimation() {triggerAnim("main", "land");}
 
     @Override
-    protected void playTakeoffAnimation() {triggerAnim("main", "takeoff");}
+    protected void playTakeoffAnimation() {triggerAnim("main", "lift");}
 
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-        controllers.add(new AnimationController<>(this, "main", 5, state -> {
-            if (phase() == FlightPhase.FLYING || phase() == FlightPhase.LANDING) {
-                return state.setAndContinue(FLY_ANIM);
-            }
-            return PlayState.STOP;
-        }).triggerableAnim("land", LAND_ANIM).triggerableAnim("takeoff", TAKEOFF_ANIM));
+        controllers.add(new AnimationController<>(this, "main", 5, state -> switch (phase()) {
+            case FLYING, LANDING -> state.setAndContinue(FLY_ANIM);
+            case RESTING -> state.setAndContinue(IDLE_ANIM);
+        }).triggerableAnim("lift", LIFT_ANIM).triggerableAnim("land", LAND_ANIM));
     }
 
     @Override

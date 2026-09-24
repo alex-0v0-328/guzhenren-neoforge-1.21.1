@@ -53,7 +53,9 @@ public class FleePlayerGoal extends Goal {
 
     @Override
     public boolean canContinueToUse() {
-        return threat != null && threat.isAlive()
+        // Re-checked every tick: a player who switches to creative or spectator, or leaves the dimension, is
+        // no longer the threat the goal started from.
+        return threat != null && threat.isAlive() && isThreat(threat) && threat.level() == gu.level()
                 && gu.distanceTo(threat) < RestingFlyingGuEntity.ESCAPE_RANGE;
     }
 

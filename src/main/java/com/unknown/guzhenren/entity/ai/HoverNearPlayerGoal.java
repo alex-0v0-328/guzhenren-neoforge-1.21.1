@@ -41,7 +41,7 @@ public class HoverNearPlayerGoal extends Goal {
     }
     @Override
     public boolean canContinueToUse() {
-        return target != null && target.isAlive() && gu.seeks(target)
+        return target != null && target.isAlive() && gu.wants(target)
                 && gu.distanceToSqr(target) <= detectRangeSqr();
     }
     @Override

@@ -7,6 +7,7 @@ import com.unknown.guzhenren.entity.HopeGuEntity;
 import com.unknown.guzhenren.entity.RestingFlyingGuEntity;
 import com.unknown.guzhenren.entity.RhinocerosBeetleGuEntity;
 import com.unknown.guzhenren.entity.ai.FleePlayerGoal;
+import com.unknown.guzhenren.entity.ai.HoverNearPlayerGoal;
 import com.unknown.guzhenren.entity.ai.LandRestGoal;
 import com.unknown.guzhenren.registry.entity.ModEntityTypes;
 import com.unknown.guzhenren.registry.item.ModItems;
@@ -42,7 +43,7 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Runtime coverage for the four Rhinoceros Beetle Gu [甲虫蛊] entities, their shared flight
- * lifecycle, and the fall safety every wild flying Gu family inherits.
+ * lifecycle, and the fall safety and player-goal release every wild flying Gu family inherits.
  *
  * @author Alex
  * @version 1.0.0
@@ -133,6 +134,38 @@ public final class BeetleGameTests {
         helper.succeed();
     }
 
+    @GameTest(template = "empty9x9x9", timeoutTicks = 100)
+    public static void fleeGoalReleasesAPlayerWhoStopsBeingAThreat(GameTestHelper helper) {
+        MockMode mode = new MockMode();
+        ServerPlayer player = survivalMock(helper, true, mode);
+        RhinocerosBeetleGuEntity beetle = spawn(helper, variants().get(0).entityType(), CENTER);
+        beetle.setNoAi(true);
+        movePlayerRelativeTo(player, beetle, 5.0D);
+        FleePlayerGoal goal = new FleePlayerGoal(beetle);
+        helper.assertTrue(goal.canUse(), "a survival player inside six blocks did not start the flee goal");
+        goal.start();
+        mode.creative = true;
+        helper.assertTrue(!goal.canContinueToUse(), "flee goal kept running from a player who switched to creative");
+        goal.stop();
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty9x9x9", timeoutTicks = 100)
+    public static void hoverGoalReleasesAPlayerWhoTurnsSpectator(GameTestHelper helper) {
+        MockMode mode = new MockMode();
+        ServerPlayer player = survivalMock(helper, true, mode);
+        HopeGuEntity hope = helper.spawn(ModEntityTypes.HOPE_GU_ENTITY.get(), CENTER);
+        hope.setNoAi(true);
+        player.moveTo(hope.getX() + 5.0D, hope.getY(), hope.getZ(), 0.0F, 0.0F);
+        HoverNearPlayerGoal goal = new HoverNearPlayerGoal(hope);
+        helper.assertTrue(goal.canUse(), "an unawakened player inside twelve blocks did not start the hover goal");
+        goal.start();
+        mode.spectator = true;
+        helper.assertTrue(!goal.canContinueToUse(), "hover goal kept following a player who turned spectator");
+        goal.stop();
+        helper.succeed();
+    }
+
     @GameTest(template = "empty9x9x9", timeoutTicks = 200)
     public static void restingBeetleTakesOffWhenThreatened(GameTestHelper helper) {
         ServerPlayer player = survivalMock(helper, true);
@@ -197,6 +230,101 @@ public final class BeetleGameTests {
         });
     }
 
+    // The landing tests ask for sky access: the default barrier roof is exactly the kind of cover a ground search
+    // must not mistake for a landing spot, and it would hide the column's real surface from the old heightmap read.
+    @GameTest(template = "empty9x9x9", timeoutTicks = 300, skyAccess = true)
+    public static void requestedLandingTouchesDownBeforeResting(GameTestHelper helper) {
+        // Both families share LandRestGoal. They start five blocks up, well outside the arrival radius, so the
+        // rest must begin on the surface rather than wherever the approach first crossed that radius.
+        List<BlockPos> columns = List.of(new BlockPos(2, 6, 2), new BlockPos(6, 6, 6));
+        List<RestingFlyingGuEntity> entities = List.of(
+                helper.spawn(ModEntityTypes.WHITE_BOAR_GU_ENTITY.get(), columns.get(0)),
+                spawn(helper, variants().get(0).entityType(), columns.get(1)));
+        for (int i = 0; i < entities.size(); i++) {
+            helper.setBlock(columns.get(i).atY(0), Blocks.STONE);
+            entities.get(i).requestLanding();
+        }
+        helper.succeedWhen(() -> {
+            for (int i = 0; i < entities.size(); i++) {
+                RestingFlyingGuEntity gu = entities.get(i);
+                // A neighboring test's player can interrupt the landing; re-arm it so the check still reaches a rest.
+                if (gu.phase() == RestingFlyingGuEntity.FlightPhase.FLYING && !gu.wantsToLand()) gu.requestLanding();
+                helper.assertValueEqual(gu.phase(), RestingFlyingGuEntity.FlightPhase.RESTING,
+                        gu.getType() + " never came to rest");
+                double clearance = gu.getY() - helper.absolutePos(columns.get(i).atY(1)).getY();
+                helper.assertTrue(clearance < 0.01D, gu.getType() + " rests " + clearance + " blocks above the ground");
+            }
+        });
+    }
+
+    @GameTest(template = "empty9x9x9", timeoutTicks = 100, skyAccess = true)
+    public static void landingRefusesWaterAndDamagingGround(GameTestHelper helper) {
+        BlockPos pond = new BlockPos(2, 1, 2);
+        helper.setBlock(pond.below(), Blocks.STONE);
+        for (BlockPos wall : List.of(pond.north(), pond.south(), pond.east(), pond.west())) {
+            helper.setBlock(wall, Blocks.STONE);
+        }
+        helper.setBlock(pond, Blocks.WATER);
+        BlockPos magma = new BlockPos(6, 0, 6);
+        helper.setBlock(magma, Blocks.MAGMA_BLOCK);
+        List<RestingFlyingGuEntity> entities = List.of(
+                helper.spawn(ModEntityTypes.WHITE_BOAR_GU_ENTITY.get(), pond.atY(6)),
+                spawn(helper, variants().get(0).entityType(), magma.atY(6)));
+        for (RestingFlyingGuEntity gu : entities) {
+            // Driven directly: the refusal is the goal's own decision, so random flight and neighboring
+            // players must not get a chance to move the Gu off the tested column first.
+            gu.setNoAi(true);
+            new LandRestGoal(gu).start();
+            helper.assertValueEqual(gu.phase(), RestingFlyingGuEntity.FlightPhase.FLYING,
+                    gu.getType() + " started landing on water or magma");
+            helper.assertTrue(!gu.wantsToLand(), gu.getType() + " kept its landing request over unsafe ground");
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty9x9x9", timeoutTicks = 100, skyAccess = true)
+    public static void reloadedRestResumesWithoutReplayingTheLanding(GameTestHelper helper) {
+        helper.setBlock(CENTER.below(), Blocks.STONE);
+        BoarGuEntity original = helper.spawn(ModEntityTypes.WHITE_BOAR_GU_ENTITY.get(), CENTER);
+        original.beginResting();
+        CompoundTag saved = new CompoundTag();
+        original.saveWithoutId(saved);
+        original.discard();
+
+        int[] landings = {0};
+        BoarGuEntity restored = new BoarGuEntity(ModEntityTypes.WHITE_BOAR_GU_ENTITY.get(), helper.getLevel(),
+                ModItems.WHITE_BOAR_GU) {
+            @Override
+            protected void playLandingAnimation() {landings[0]++;}
+        };
+        restored.load(saved);
+        helper.getLevel().addFreshEntity(restored);
+        helper.runAfterDelay(10, () -> {
+            helper.assertValueEqual(landings[0], 0, "reloaded rest replayed its landing animation");
+            helper.succeed();
+        });
+    }
+
+    @GameTest(template = "empty9x9x9", timeoutTicks = 100)
+    public static void onlyAGroundedTakeoffPlaysTheLift(GameTestHelper helper) {
+        int[] lifts = {0};
+        BoarGuEntity gu = new BoarGuEntity(ModEntityTypes.WHITE_BOAR_GU_ENTITY.get(), helper.getLevel(),
+                ModItems.WHITE_BOAR_GU) {
+            @Override
+            protected void playLandingAnimation() {}
+            @Override
+            protected void playTakeoffAnimation() {lifts[0]++;}
+        };
+        gu.beginLanding();
+        gu.takeOff();
+        helper.assertValueEqual(lifts[0], 0, "an aborted landing replayed the lift from closed wing cases");
+        gu.beginLanding();
+        gu.beginResting();
+        gu.takeOff();
+        helper.assertValueEqual(lifts[0], 1, "a takeoff from rest did not play the lift");
+        helper.succeed();
+    }
+
     @GameTest(template = "empty9x9x9", timeoutTicks = 300)
     public static void landingFromFlightAltitudeDoesNotKill(GameTestHelper helper) {
         // Guards the FlyingGuEntity fall-check override with a real descent past the three-block
@@ -258,15 +386,25 @@ public final class BeetleGameTests {
 
     private record Variant(EntityType<RhinocerosBeetleGuEntity> entityType, Item caughtItem) {}
 
+    /** The mock player's game mode, switchable while a goal is running. */
+    private static final class MockMode {
+        private boolean creative;
+        private boolean spectator;
+    }
+
     private static ServerPlayer survivalMock(GameTestHelper helper, boolean connect) {
+        return survivalMock(helper, connect, new MockMode());
+    }
+
+    private static ServerPlayer survivalMock(GameTestHelper helper, boolean connect, MockMode mode) {
         CommonListenerCookie cookie = CommonListenerCookie.createInitial(
                 new GameProfile(UUID.randomUUID(), "gzr-beetle-gametest"), false);
         ServerPlayer player = new ServerPlayer(helper.getLevel().getServer(), helper.getLevel(),
                 cookie.gameProfile(), cookie.clientInformation()) {
             @Override
-            public boolean isSpectator() {return false;}
+            public boolean isSpectator() {return mode.spectator;}
             @Override
-            public boolean isCreative() {return false;}
+            public boolean isCreative() {return mode.creative;}
         };
         if (!connect) return player;
         Connection connection = new Connection(PacketFlow.SERVERBOUND);

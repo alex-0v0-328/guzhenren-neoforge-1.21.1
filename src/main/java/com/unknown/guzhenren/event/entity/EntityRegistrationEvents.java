@@ -59,26 +59,10 @@ public final class EntityRegistrationEvents {
     }
     @SubscribeEvent
     public static void onRegisterSpawnPlacements(RegisterSpawnPlacementsEvent event) {
-        event.register(ModEntityTypes.HOPE_GU_ENTITY.get(),
-                SpawnPlacementTypes.NO_RESTRICTIONS,
-                Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
-                EntityRegistrationEvents::onTheSurface,
-                RegisterSpawnPlacementsEvent.Operation.REPLACE);
-        event.register(ModEntityTypes.WHITE_BOAR_GU_ENTITY.get(),
-                SpawnPlacementTypes.NO_RESTRICTIONS,
-                Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
-                EntityRegistrationEvents::onTheSurface,
-                RegisterSpawnPlacementsEvent.Operation.REPLACE);
-        event.register(ModEntityTypes.BLACK_BOAR_GU_ENTITY.get(),
-                SpawnPlacementTypes.NO_RESTRICTIONS,
-                Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
-                EntityRegistrationEvents::onTheSurface,
-                RegisterSpawnPlacementsEvent.Operation.REPLACE);
-        event.register(ModEntityTypes.FLOWER_BOAR_GU_ENTITY.get(),
-                SpawnPlacementTypes.NO_RESTRICTIONS,
-                Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
-                EntityRegistrationEvents::onTheSurface,
-                RegisterSpawnPlacementsEvent.Operation.REPLACE);
+        registerSurfaceSpawn(event, ModEntityTypes.HOPE_GU_ENTITY.get());
+        registerSurfaceSpawn(event, ModEntityTypes.WHITE_BOAR_GU_ENTITY.get());
+        registerSurfaceSpawn(event, ModEntityTypes.BLACK_BOAR_GU_ENTITY.get());
+        registerSurfaceSpawn(event, ModEntityTypes.FLOWER_BOAR_GU_ENTITY.get());
         registerSurfaceSpawn(event, ModEntityTypes.HORIZONTAL_CRASH_GU_ENTITY.get());
         registerSurfaceSpawn(event, ModEntityTypes.VERTICAL_CRASH_GU_ENTITY.get());
         registerSurfaceSpawn(event, ModEntityTypes.CHARGING_CRASH_GU_4_ENTITY.get());
