@@ -26,11 +26,6 @@ sourceSets.main.resources {
 }
 
 repositories {
-    // JEI is not on Maven Central.
-    maven {
-        name = "Jared's maven"
-        url = "https://maven.blamejared.com/"
-    }
     // Curios.
     maven {
         name = "Illusive Soulworks maven"
