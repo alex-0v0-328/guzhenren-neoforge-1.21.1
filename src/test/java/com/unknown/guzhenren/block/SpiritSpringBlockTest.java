@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
  * Pure pins for the Spirit Spring [元泉] production decision: the 128-block player gate (Alex,
  * 2026-09-23) and the nearby-stones cap. Lives in L2 -- loading the block class pulls in
  * {@code LiquidBlock}'s static game-event registration, which pureTest's un-bootstrapped JVM
- * rejects (reference §3).
+ * rejects (reference: Environment, build and test [环境、构建与测试]).
  */
 class SpiritSpringBlockTest {
 
