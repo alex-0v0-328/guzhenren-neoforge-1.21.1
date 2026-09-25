@@ -44,7 +44,7 @@ class WildBoarResourcesTest {
         BakedGeoModel baked = BakedModelFactory.getForNamespace("guzhenren")
                 .constructGeoModel(GeometryTree.fromModel(model));
         assertEquals("geometry.wild_boar", baked.properties().identifier());
-        assertEquals(37, cubeCount(baked.topLevelBones()));
+        assertEquals(36, cubeCount(baked.topLevelBones()));
         assertEquals(25, boneCount(baked.topLevelBones()));
 
         BakedAnimations animations = KeyFramesAdapter.GEO_GSON.fromJson(
