@@ -9,11 +9,12 @@ import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
 /**
- * The mod's worldgen features [世界生成]: currently only the Spirit Spring [元泉] structure.
+ * The mod's worldgen features [世界生成]: the Spirit Spring [元泉] structure in its two placements,
+ * surface and underground cave (2026-09-26).
  *
  * <p>Placement data (configured/placed feature JSON, biome modifier) is datagen'd in
  * {@link com.unknown.guzhenren.datagen.ModDatapackProvider}; this class only holds the
- * {@code Feature} instance itself.
+ * {@code Feature} instances themselves.
  *
  * @author Alex
  * @version 1.0.0
@@ -25,6 +26,10 @@ public final class ModFeatures {
     public static final DeferredRegister<Feature<?>> FEATURES =
             DeferredRegister.create(Registries.FEATURE, Guzhenren.MOD_ID);
     public static final DeferredHolder<Feature<?>, SpiritSpringFeature> SPIRIT_SPRING =
-            FEATURES.register("spirit_spring", SpiritSpringFeature::new);
+            FEATURES.register("spirit_spring",
+                    () -> new SpiritSpringFeature(SpiritSpringFeature.Placement.SURFACE));
+    public static final DeferredHolder<Feature<?>, SpiritSpringFeature> SPIRIT_SPRING_UNDERGROUND =
+            FEATURES.register("spirit_spring_underground",
+                    () -> new SpiritSpringFeature(SpiritSpringFeature.Placement.UNDERGROUND));
     public static void register(IEventBus modEventBus) {FEATURES.register(modEventBus);}
 }

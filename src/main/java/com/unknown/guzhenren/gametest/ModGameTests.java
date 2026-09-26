@@ -132,6 +132,40 @@ public final class ModGameTests {
             helper.assertTrue(stones <= SpiritSpringBlock.NEARBY_STONES_CAP, "the cap pauses further batches");
         });
     }
+    @GameTest(template = "empty9x9x9", timeoutTicks = 600)
+    public static void spiritSpringStaysIdleWhileEveryPlayerIsBeyondTheRange(GameTestHelper helper) {
+        BlockPos spring = CENTER;
+        helper.setBlock(spring.below(), Blocks.STONE);
+        helper.setBlock(spring, ModBlocks.SPIRIT_SPRING.get());
+        ServerPlayer player = survivalMock(helper, null, true);
+        BlockPos absoluteSpring = helper.absolutePos(spring);
+        player.setPos(absoluteSpring.getX() + 0.5 + 200.0, absoluteSpring.getY() + 1.0,
+                absoluteSpring.getZ() + 0.5);
+        helper.runAtTickTime(250L, () -> {
+            int stones = SpiritSpringBlock.nearbyStones(helper.getLevel(), absoluteSpring);
+            helper.assertTrue(stones == 0,
+                    "no stones after two production intervals while every player is beyond the range, but found "
+                            + stones);
+            helper.succeed();
+        });
+    }
+    @GameTest(template = "empty9x9x9", timeoutTicks = 600)
+    public static void spiritSpringProducesWhenOneOfSeveralPlayersIsNear(GameTestHelper helper) {
+        BlockPos spring = CENTER;
+        helper.setBlock(spring.below(), Blocks.STONE);
+        helper.setBlock(spring, ModBlocks.SPIRIT_SPRING.get());
+        BlockPos absoluteSpring = helper.absolutePos(spring);
+        ServerPlayer far = survivalMock(helper, null, true);
+        far.setPos(absoluteSpring.getX() + 0.5 + 200.0, absoluteSpring.getY() + 1.0,
+                absoluteSpring.getZ() + 0.5);
+        ServerPlayer near = survivalMock(helper, null, true);
+        near.setPos(absoluteSpring.getX() + 0.5, absoluteSpring.getY() + 1.0, absoluteSpring.getZ() + 0.5);
+        helper.succeedWhen(() -> {
+            int stones = SpiritSpringBlock.nearbyStones(helper.getLevel(), absoluteSpring);
+            helper.assertTrue(stones >= SpiritSpringBlock.STONES_PER_PRODUCTION,
+                    "one near player keeps production alive even with another beyond the range");
+        });
+    }
 
     @GameTest(template = "empty9x9x9", timeoutTicks = 100)
     public static void spiritSpringStructurePlacesPerSpec(GameTestHelper helper) {

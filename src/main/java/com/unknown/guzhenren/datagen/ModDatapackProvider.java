@@ -38,10 +38,12 @@ import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
 import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration;
 import net.minecraft.world.level.levelgen.flat.FlatLevelGeneratorSettings;
 import net.minecraft.world.level.levelgen.placement.BiomeFilter;
+import net.minecraft.world.level.levelgen.placement.HeightRangePlacement;
 import net.minecraft.world.level.levelgen.placement.InSquarePlacement;
 import net.minecraft.world.level.levelgen.placement.PlacedFeature;
 import net.minecraft.world.level.levelgen.placement.PlacementModifier;
 import net.minecraft.world.level.levelgen.placement.RarityFilter;
+import net.minecraft.world.level.levelgen.VerticalAnchor;
 import net.neoforged.neoforge.common.data.DatapackBuiltinEntriesProvider;
 import net.neoforged.neoforge.common.world.BiomeModifier;
 import net.neoforged.neoforge.common.world.BiomeModifiers;
@@ -144,16 +146,28 @@ public class ModDatapackProvider extends DatapackBuiltinEntriesProvider {
     }
     //endregion
 
-    //region Worldgen features [世界生成] -- the Spirit Spring [元泉] surface structure
+    //region Worldgen features [世界生成] -- the Spirit Spring [元泉] structures, surface and underground
     private static final ResourceKey<ConfiguredFeature<?, ?>> SPIRIT_SPRING_CONFIGURED = ResourceKey.create(
             Registries.CONFIGURED_FEATURE, Guzhenren.id("spirit_spring"));
     private static final ResourceKey<PlacedFeature> SPIRIT_SPRING_PLACED = ResourceKey.create(
             Registries.PLACED_FEATURE, Guzhenren.id("spirit_spring"));
+    private static final ResourceKey<ConfiguredFeature<?, ?>> SPIRIT_SPRING_UNDERGROUND_CONFIGURED =
+            ResourceKey.create(Registries.CONFIGURED_FEATURE, Guzhenren.id("spirit_spring_underground"));
+    private static final ResourceKey<PlacedFeature> SPIRIT_SPRING_UNDERGROUND_PLACED = ResourceKey.create(
+            Registries.PLACED_FEATURE, Guzhenren.id("spirit_spring_underground"));
     /** ⚠ Alex's pick (2026-09-23): desert-well scale, but across 39 land biomes instead of one. */
     private static final int SPIRIT_SPRING_RARITY = 1000;
+    /**
+     * ⚠ Alex's constraint (2026-09-26): strictly rarer than the surface roll. 3000 is the initial
+     * pick, his to tune -- the cave-floor scan also fails most sampled attempts, so the effective
+     * underground rate lands far below the surface one.
+     */
+    private static final int SPIRIT_SPRING_UNDERGROUND_RARITY = 3000;
     private static void configuredFeatures(BootstrapContext<ConfiguredFeature<?, ?>> context) {
         context.register(SPIRIT_SPRING_CONFIGURED,
                 new ConfiguredFeature<>(ModFeatures.SPIRIT_SPRING.get(), NoneFeatureConfiguration.INSTANCE));
+        context.register(SPIRIT_SPRING_UNDERGROUND_CONFIGURED, new ConfiguredFeature<>(
+                ModFeatures.SPIRIT_SPRING_UNDERGROUND.get(), NoneFeatureConfiguration.INSTANCE));
     }
     private static void placedFeatures(BootstrapContext<PlacedFeature> context) {
         HolderGetter<ConfiguredFeature<?, ?>> configured = context.lookup(Registries.CONFIGURED_FEATURE);
@@ -161,12 +175,20 @@ public class ModDatapackProvider extends DatapackBuiltinEntriesProvider {
                 configured.getOrThrow(SPIRIT_SPRING_CONFIGURED),
                 List.<PlacementModifier>of(RarityFilter.onAverageOnceEvery(SPIRIT_SPRING_RARITY),
                         InSquarePlacement.spread(), BiomeFilter.biome())));
+        context.register(SPIRIT_SPRING_UNDERGROUND_PLACED, new PlacedFeature(
+                configured.getOrThrow(SPIRIT_SPRING_UNDERGROUND_CONFIGURED),
+                List.<PlacementModifier>of(RarityFilter.onAverageOnceEvery(SPIRIT_SPRING_UNDERGROUND_RARITY),
+                        InSquarePlacement.spread(),
+                        HeightRangePlacement.uniform(VerticalAnchor.aboveBottom(8), VerticalAnchor.belowTop(8)),
+                        BiomeFilter.biome())));
     }
     //endregion
 
     //region Biome modifiers [生态修改] -- where wild entities [野生实体] spawn and the spring generates
     private static final ResourceKey<BiomeModifier> GENERATE_SPIRIT_SPRING = ResourceKey.create(
             NeoForgeRegistries.Keys.BIOME_MODIFIERS, Guzhenren.id("spirit_spring"));
+    private static final ResourceKey<BiomeModifier> GENERATE_SPIRIT_SPRING_UNDERGROUND = ResourceKey.create(
+            NeoForgeRegistries.Keys.BIOME_MODIFIERS, Guzhenren.id("spirit_spring_underground"));
     private static final ResourceKey<BiomeModifier> SPAWN_HOPE_GU = ResourceKey.create(
             NeoForgeRegistries.Keys.BIOME_MODIFIERS,
             Guzhenren.id("spawn_hope_gu"));
@@ -222,6 +244,10 @@ public class ModDatapackProvider extends DatapackBuiltinEntriesProvider {
                 biomes.getOrThrow(ModBiomeTags.SPIRIT_SPRING_GENERATES),
                 HolderSet.direct(placedFeatures.getOrThrow(SPIRIT_SPRING_PLACED)),
                 GenerationStep.Decoration.TOP_LAYER_MODIFICATION));
+        context.register(GENERATE_SPIRIT_SPRING_UNDERGROUND, new BiomeModifiers.AddFeaturesBiomeModifier(
+                biomes.getOrThrow(ModBiomeTags.SPIRIT_SPRING_GENERATES),
+                HolderSet.direct(placedFeatures.getOrThrow(SPIRIT_SPRING_UNDERGROUND_PLACED)),
+                GenerationStep.Decoration.UNDERGROUND_DECORATION));
     }
     private static MobSpawnSettings.SpawnerData beetleSpawns(EntityType<RhinocerosBeetleGuEntity> type,
                                                              int weight) {

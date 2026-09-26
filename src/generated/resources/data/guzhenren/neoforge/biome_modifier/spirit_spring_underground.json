@@ -1,0 +1,6 @@
+{
+  "type": "neoforge:add_features",
+  "biomes": "#guzhenren:spirit_spring_generates",
+  "features": "guzhenren:spirit_spring_underground",
+  "step": "underground_decoration"
+}
