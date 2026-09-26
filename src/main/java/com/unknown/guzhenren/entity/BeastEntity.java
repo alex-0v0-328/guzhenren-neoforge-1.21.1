@@ -649,12 +649,13 @@ public abstract class BeastEntity extends PathfinderMob implements GeoEntity {
 
         @Override
         public boolean canUse() {
-            // Resting but awake beasts still notice prey, including the lie-down transition; only
-            // actual sleep (and get-up) skips hunting.
+            // Any awake, non-combat pose notices prey — including sitting, lying, rolling and
+            // scratching; only actual sleep, the get-up transition and ongoing combat skip hunting.
             Action action = this.beast.action();
             return this.beast.huntsActively() && this.beast.getTarget() == null
-                    && (action == Action.IDLE || action == Action.SIT || action == Action.LIE
-                            || action == Action.LIE_DOWN);
+                    && action != Action.SLEEP && action != Action.GET_UP && action != Action.DEATH
+                    && action != Action.ROAR && !action.isAttack()
+                    && action != Action.HURT_LEFT && action != Action.HURT_RIGHT;
         }
 
         @Override

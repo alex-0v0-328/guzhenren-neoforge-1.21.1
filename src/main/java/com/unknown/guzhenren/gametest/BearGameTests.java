@@ -5,6 +5,7 @@ import com.unknown.guzhenren.Guzhenren;
 import com.unknown.guzhenren.entity.BearEntity;
 import com.unknown.guzhenren.entity.BearSpecies;
 import com.unknown.guzhenren.entity.BeastEntity;
+import com.unknown.guzhenren.entity.TigerEntity;
 import com.unknown.guzhenren.entity.WildBoarEntity;
 import com.unknown.guzhenren.registry.entity.ModEntityTypes;
 import io.netty.channel.embedded.EmbeddedChannel;
@@ -446,26 +447,44 @@ public final class BearGameTests {
         });
     }
 
-    @GameTest(template = "empty9x9x9", timeoutTicks = 180)
-    public static void bearNightSleepChainTransitions(GameTestHelper helper) {
+    @GameTest(template = "empty9x9x9", timeoutTicks = 240)
+    public static void beastNightSleepChainTransitions(GameTestHelper helper) {
         ground(helper);
-        BearEntity bear = spawnBear(helper, CENTER, BearSpecies.BROWN);
+        // Both species are driven together because dayTime is global in the shared GameTest world.
+        BearEntity bear = spawnBear(helper, new BlockPos(2, 1, 4), BearSpecies.BROWN);
+        TigerEntity tiger = helper.spawn(ModEntityTypes.TIGER.get(), new BlockPos(6, 1, 4));
         helper.getLevel().setDayTime(13000L);
         bear.startAction(BeastEntity.Action.LIE_DOWN);
-        helper.onEachTick(() -> bear.getNavigation().stop());
+        tiger.startAction(BeastEntity.Action.LIE_DOWN);
+        helper.onEachTick(() -> {
+            bear.getNavigation().stop();
+            tiger.getNavigation().stop();
+        });
 
+        helper.runAtTickTime(TigerEntity.LIE_DOWN_TICKS, () ->
+                helper.assertValueEqual(tiger.action(), BeastEntity.Action.LIE,
+                        "tiger did not transition to lie after lie-down"));
         helper.runAtTickTime(BearEntity.LIE_DOWN_TICKS, () ->
                 helper.assertValueEqual(bear.action(), BeastEntity.Action.LIE,
                         "bear did not transition to lie after lie-down"));
+        helper.runAtTickTime(TigerEntity.LIE_DOWN_TICKS + 80L, () ->
+                helper.assertValueEqual(tiger.action(), BeastEntity.Action.SLEEP,
+                        "tiger did not transition to sleep after lying"));
         helper.runAtTickTime(BearEntity.LIE_DOWN_TICKS + 80L, () ->
                 helper.assertValueEqual(bear.action(), BeastEntity.Action.SLEEP,
                         "bear did not transition to sleep after lying"));
-        helper.runAtTickTime(BearEntity.LIE_DOWN_TICKS + 82L, () ->
-                helper.getLevel().setDayTime(1000L));
-        helper.runAtTickTime(BearEntity.LIE_DOWN_TICKS + 83L, () ->
-                helper.assertValueEqual(bear.action(), BeastEntity.Action.GET_UP,
-                        "bear did not get up at day"));
-        helper.runAtTickTime(BearEntity.LIE_DOWN_TICKS + 83L + BearEntity.GET_UP_TICKS + 1L, () -> {
+
+        helper.runAtTickTime(110L, () -> helper.getLevel().setDayTime(1000L));
+        helper.runAtTickTime(111L, () -> {
+            helper.assertValueEqual(bear.action(), BeastEntity.Action.GET_UP,
+                    "bear did not get up at day");
+            helper.assertValueEqual(tiger.action(), BeastEntity.Action.GET_UP,
+                    "tiger did not get up at day");
+        });
+        helper.runAtTickTime(111L + TigerEntity.GET_UP_TICKS + 1L, () ->
+                helper.assertValueEqual(tiger.action(), BeastEntity.Action.IDLE,
+                        "tiger did not return to idle after getting up"));
+        helper.runAtTickTime(111L + BearEntity.GET_UP_TICKS + 1L, () -> {
             helper.assertValueEqual(bear.action(), BeastEntity.Action.IDLE,
                     "bear did not return to idle after getting up");
             helper.succeed();

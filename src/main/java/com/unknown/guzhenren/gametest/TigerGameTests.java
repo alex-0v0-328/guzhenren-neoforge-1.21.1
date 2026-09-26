@@ -35,6 +35,9 @@ import org.jetbrains.annotations.Nullable;
  *
  * <p>Peaceful proactive hunting is unpinned because difficulty is server-global in the shared GameTest world;
  * only the synchronous "retaliation is blocked on Peaceful" seam is tested.
+ *
+ * <p>The night sleep chain for both bear and tiger species is pinned by
+ * {@code BearGameTests.beastNightSleepChainTransitions} because dayTime is a shared global in the GameTest world.
  */
 @GameTestHolder(Guzhenren.MOD_ID)
 @PrefixGameTestTemplate(false)
@@ -394,32 +397,6 @@ public final class TigerGameTests {
         helper.runAtTickTime(10L, () -> {
             helper.assertTrue(tiger.getTarget() == null,
                     "tiger kept a target outside its follow range");
-            helper.succeed();
-        });
-    }
-
-    @GameTest(template = "empty9x9x9", timeoutTicks = 180)
-    public static void tigerNightSleepChainTransitions(GameTestHelper helper) {
-        ground(helper);
-        TigerEntity tiger = spawnTiger(helper, CENTER, ModEntityTypes.TIGER);
-        helper.getLevel().setDayTime(13000L);
-        tiger.startAction(BeastEntity.Action.LIE_DOWN);
-        helper.onEachTick(() -> tiger.getNavigation().stop());
-
-        helper.runAtTickTime(TigerEntity.LIE_DOWN_TICKS, () ->
-                helper.assertValueEqual(tiger.action(), BeastEntity.Action.LIE,
-                        "tiger did not transition to lie after lie-down"));
-        helper.runAtTickTime(TigerEntity.LIE_DOWN_TICKS + 80L, () ->
-                helper.assertValueEqual(tiger.action(), BeastEntity.Action.SLEEP,
-                        "tiger did not transition to sleep after lying"));
-        helper.runAtTickTime(TigerEntity.LIE_DOWN_TICKS + 82L, () ->
-                helper.getLevel().setDayTime(1000L));
-        helper.runAtTickTime(TigerEntity.LIE_DOWN_TICKS + 83L, () ->
-                helper.assertValueEqual(tiger.action(), BeastEntity.Action.GET_UP,
-                        "tiger did not get up at day"));
-        helper.runAtTickTime(TigerEntity.LIE_DOWN_TICKS + 83L + TigerEntity.GET_UP_TICKS + 1L, () -> {
-            helper.assertValueEqual(tiger.action(), BeastEntity.Action.IDLE,
-                    "tiger did not return to idle after getting up");
             helper.succeed();
         });
     }
