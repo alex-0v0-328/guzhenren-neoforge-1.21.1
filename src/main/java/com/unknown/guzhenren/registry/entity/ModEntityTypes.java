@@ -1,9 +1,12 @@
 package com.unknown.guzhenren.registry.entity;
 
 import com.unknown.guzhenren.Guzhenren;
+import com.unknown.guzhenren.entity.BearEntity;
+import com.unknown.guzhenren.entity.BearSpecies;
 import com.unknown.guzhenren.entity.BoarGuEntity;
 import com.unknown.guzhenren.entity.HopeGuEntity;
 import com.unknown.guzhenren.entity.RhinocerosBeetleGuEntity;
+import com.unknown.guzhenren.entity.TigerEntity;
 import com.unknown.guzhenren.entity.WildBoarEntity;
 import com.unknown.guzhenren.registry.item.ModItems;
 import java.util.function.Supplier;
@@ -19,7 +22,8 @@ import net.neoforged.neoforge.registries.DeferredRegister;
  * The entity types this mod registers.
  *
  * <p>Hope Gu, three boar Gu and four rhinoceros beetle Gu variants are naturally spawning ambient entities;
- * the wild boar is a naturally spawning creature. Hope Gu's client mote is emitted by its entity class.
+ * the wild boar, the four bears and the two tigers are naturally spawning creatures. Hope Gu's client mote
+ * is emitted by its entity class.
  * Gu capture is a bare right click and is never gated on awakening [开窍]; the wild boar has no capture path.
  *
  * @author Alex
@@ -38,6 +42,10 @@ public final class ModEntityTypes {
     private static final int TRACKING_CHUNKS = 8;
     private static final float WILD_BOAR_WIDTH = 1.1F;
     private static final float WILD_BOAR_HEIGHT = 1.2F;
+    private static final float BEAR_WIDTH = 1.2F;
+    private static final float BEAR_HEIGHT = 1.4F;
+    private static final float TIGER_WIDTH = 1.3F;
+    private static final float TIGER_HEIGHT = 1.4F;
     public static final DeferredHolder<EntityType<?>, EntityType<HopeGuEntity>> HOPE_GU_ENTITY =
             ENTITY_TYPES.register("hope_gu_entity", () -> EntityType.Builder
                     .<HopeGuEntity>of((type, level) ->
@@ -66,6 +74,33 @@ public final class ModEntityTypes {
                     .sized(WILD_BOAR_WIDTH, WILD_BOAR_HEIGHT)
                     .clientTrackingRange(TRACKING_CHUNKS)
                     .build("wild_boar"));
+    public static final DeferredHolder<EntityType<?>, EntityType<BearEntity>> BROWN_BEAR =
+            bear(BearSpecies.BROWN);
+    public static final DeferredHolder<EntityType<?>, EntityType<BearEntity>> ASIAN_BLACK_BEAR =
+            bear(BearSpecies.ASIAN_BLACK);
+    public static final DeferredHolder<EntityType<?>, EntityType<BearEntity>> AMERICAN_BLACK_BEAR =
+            bear(BearSpecies.AMERICAN_BLACK);
+    public static final DeferredHolder<EntityType<?>, EntityType<BearEntity>> ALBINO_BEAR =
+            bear(BearSpecies.ALBINO);
+    public static final DeferredHolder<EntityType<?>, EntityType<TigerEntity>> TIGER =
+            ENTITY_TYPES.register("tiger", () -> EntityType.Builder
+                    .<TigerEntity>of(TigerEntity::new, MobCategory.CREATURE)
+                    .sized(TIGER_WIDTH, TIGER_HEIGHT)
+                    .clientTrackingRange(TRACKING_CHUNKS)
+                    .build("tiger"));
+    public static final DeferredHolder<EntityType<?>, EntityType<TigerEntity>> WHITE_TIGER =
+            ENTITY_TYPES.register("white_tiger", () -> EntityType.Builder
+                    .<TigerEntity>of(TigerEntity::new, MobCategory.CREATURE)
+                    .sized(TIGER_WIDTH, TIGER_HEIGHT)
+                    .clientTrackingRange(TRACKING_CHUNKS)
+                    .build("white_tiger"));
+    private static DeferredHolder<EntityType<?>, EntityType<BearEntity>> bear(BearSpecies species) {
+        return ENTITY_TYPES.register(species.id(), () -> EntityType.Builder
+                .<BearEntity>of((type, level) -> new BearEntity(type, level, species), MobCategory.CREATURE)
+                .sized(BEAR_WIDTH, BEAR_HEIGHT)
+                .clientTrackingRange(TRACKING_CHUNKS)
+                .build(species.id()));
+    }
     private static DeferredHolder<EntityType<?>, EntityType<BoarGuEntity>> boarGu(String name, Supplier<Item> caughtGu) {
         return ENTITY_TYPES.register(name, () -> EntityType.Builder
                 .<BoarGuEntity>of((type, level) -> new BoarGuEntity(type, level, caughtGu), MobCategory.AMBIENT)

@@ -20,8 +20,9 @@ import org.jetbrains.annotations.Nullable;
  *
  * <p>Extends {@link net.minecraft.data.tags.TagsProvider} for {@link net.minecraft.world.level.biome.Biome}.
  * Populates the hope, boar and rhinoceros beetle Gu tags and the Spirit Spring [元泉] generation tag
- * from one shared list of 39 land biomes, and the wild boar tag from the five forest biomes where it
- * naturally occurs.
+ * from one shared list of 39 land biomes, the wild boar tag from the five forest biomes where it
+ * naturally occurs, the bear tag from every forest-family biome (12), and the tiger tag from the
+ * three jungle biomes.
  * Must NOT collapse to {@code #minecraft:is_overworld} because that carries the
  * oceans, whose surface sits at sea level.
  *
@@ -38,6 +39,23 @@ public class ModBiomeTagsProvider extends TagsProvider<Biome> {
             Biomes.BIRCH_FOREST,
             Biomes.OLD_GROWTH_BIRCH_FOREST,
             Biomes.DARK_FOREST);
+    private static final List<ResourceKey<Biome>> BEAR_BIOMES = List.of(
+            Biomes.FOREST,
+            Biomes.FLOWER_FOREST,
+            Biomes.BIRCH_FOREST,
+            Biomes.OLD_GROWTH_BIRCH_FOREST,
+            Biomes.DARK_FOREST,
+            Biomes.TAIGA,
+            Biomes.SNOWY_TAIGA,
+            Biomes.OLD_GROWTH_PINE_TAIGA,
+            Biomes.OLD_GROWTH_SPRUCE_TAIGA,
+            Biomes.JUNGLE,
+            Biomes.SPARSE_JUNGLE,
+            Biomes.BAMBOO_JUNGLE);
+    private static final List<ResourceKey<Biome>> TIGER_BIOMES = List.of(
+            Biomes.JUNGLE,
+            Biomes.SPARSE_JUNGLE,
+            Biomes.BAMBOO_JUNGLE);
     private static final List<ResourceKey<Biome>> LAND_SPAWN_BIOMES = List.of(
             Biomes.PLAINS,
             Biomes.SUNFLOWER_PLAINS,
@@ -102,6 +120,12 @@ public class ModBiomeTagsProvider extends TagsProvider<Biome> {
         }
         for (ResourceKey<Biome> biome : WILD_BOAR_BIOMES) {
             tag(ModBiomeTags.WILD_BOAR_SPAWNS).add(biome);
+        }
+        for (ResourceKey<Biome> biome : BEAR_BIOMES) {
+            tag(ModBiomeTags.BEAR_SPAWNS).add(biome);
+        }
+        for (ResourceKey<Biome> biome : TIGER_BIOMES) {
+            tag(ModBiomeTags.TIGER_SPAWNS).add(biome);
         }
     }
 }

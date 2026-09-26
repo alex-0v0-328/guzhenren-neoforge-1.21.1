@@ -1,7 +1,10 @@
 package com.unknown.guzhenren.event.entity;
 
 import com.unknown.guzhenren.Guzhenren;
+import com.unknown.guzhenren.entity.BearEntity;
+import com.unknown.guzhenren.entity.BearSpecies;
 import com.unknown.guzhenren.entity.FlyingGuEntity;
+import com.unknown.guzhenren.entity.TigerEntity;
 import com.unknown.guzhenren.entity.WildBoarEntity;
 import com.unknown.guzhenren.registry.entity.ModEntityTypes;
 import net.minecraft.core.BlockPos;
@@ -53,6 +56,19 @@ public final class EntityRegistrationEvents {
         event.put(ModEntityTypes.CHARGING_CRASH_GU_4_ENTITY.get(), restingGuAttributes().build());
         event.put(ModEntityTypes.CHARGING_CRASH_GU_5_ENTITY.get(), restingGuAttributes().build());
         event.put(ModEntityTypes.WILD_BOAR.get(), WildBoarEntity.createAttributes().build());
+        for (BearSpecies species : BearSpecies.values()) {
+            event.put(bearType(species), BearEntity.createAttributes(species).build());
+        }
+        event.put(ModEntityTypes.TIGER.get(), TigerEntity.createAttributes().build());
+        event.put(ModEntityTypes.WHITE_TIGER.get(), TigerEntity.createAttributes().build());
+    }
+    private static EntityType<BearEntity> bearType(BearSpecies species) {
+        return switch (species) {
+            case BROWN -> ModEntityTypes.BROWN_BEAR.get();
+            case ASIAN_BLACK -> ModEntityTypes.ASIAN_BLACK_BEAR.get();
+            case AMERICAN_BLACK -> ModEntityTypes.AMERICAN_BLACK_BEAR.get();
+            case ALBINO -> ModEntityTypes.ALBINO_BEAR.get();
+        };
     }
     private static AttributeSupplier.Builder restingGuAttributes() {
         return FlyingGuEntity.createAttributes().add(Attributes.FLYING_SPEED, RESTING_GU_FLYING_SPEED);
@@ -67,9 +83,19 @@ public final class EntityRegistrationEvents {
         registerSurfaceSpawn(event, ModEntityTypes.VERTICAL_CRASH_GU_ENTITY.get());
         registerSurfaceSpawn(event, ModEntityTypes.CHARGING_CRASH_GU_4_ENTITY.get());
         registerSurfaceSpawn(event, ModEntityTypes.CHARGING_CRASH_GU_5_ENTITY.get());
-        event.register(ModEntityTypes.WILD_BOAR.get(), SpawnPlacementTypes.ON_GROUND,
+        registerAnimalSpawn(event, ModEntityTypes.WILD_BOAR.get());
+        registerAnimalSpawn(event, ModEntityTypes.BROWN_BEAR.get());
+        registerAnimalSpawn(event, ModEntityTypes.ASIAN_BLACK_BEAR.get());
+        registerAnimalSpawn(event, ModEntityTypes.AMERICAN_BLACK_BEAR.get());
+        registerAnimalSpawn(event, ModEntityTypes.ALBINO_BEAR.get());
+        registerAnimalSpawn(event, ModEntityTypes.TIGER.get());
+        registerAnimalSpawn(event, ModEntityTypes.WHITE_TIGER.get());
+    }
+    private static <T extends Mob> void registerAnimalSpawn(RegisterSpawnPlacementsEvent event,
+                                                            EntityType<T> type) {
+        event.register(type, SpawnPlacementTypes.ON_GROUND,
                 Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
-                (type, level, reason, pos, random) -> level.getBlockState(pos.below())
+                (entityType, level, reason, pos, random) -> level.getBlockState(pos.below())
                         .is(net.minecraft.tags.BlockTags.ANIMALS_SPAWNABLE_ON)
                         && (MobSpawnType.ignoresLightRequirements(reason) || level.getRawBrightness(pos, 0) > 8),
                 RegisterSpawnPlacementsEvent.Operation.REPLACE);

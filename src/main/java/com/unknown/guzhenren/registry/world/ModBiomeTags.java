@@ -8,9 +8,11 @@ import net.minecraft.world.level.biome.Biome;
 /**
  * The biome tags this mod declares.
  *
- * <p>Tag-key holder (not a DeferredRegister) for the land biomes each wild Gu family and the wild boar
- * spawn in, plus the land biomes the Spirit Spring [元泉] structure generates in.
- * The wild boar tag is deliberately limited to its five forest biomes.
+ * <p>Tag-key holder (not a DeferredRegister) for the land biomes each wild Gu family and the wild
+ * beasts spawn in, plus the land biomes the Spirit Spring [元泉] structure generates in.
+ * The wild boar tag is deliberately limited to its five forest biomes; the bear tag carries every
+ * forest-family biome (the boar's five, the four taigas and the three jungles), and the tiger tag
+ * the three jungles.
  * The wild Gu lists must NOT collapse to {@code #minecraft:is_overworld} -- that
  * carries the oceans, whose surface sits at sea level where the height check cannot hold a mote off
  * the water.
@@ -27,6 +29,8 @@ public final class ModBiomeTags {
     public static final TagKey<Biome> BOAR_GU_SPAWNS = key("boar_gu_spawns");
     public static final TagKey<Biome> RHINOCEROS_BEETLE_GU_SPAWNS = key("rhinoceros_beetle_gu_spawns");
     public static final TagKey<Biome> WILD_BOAR_SPAWNS = key("wild_boar_spawns");
+    public static final TagKey<Biome> BEAR_SPAWNS = key("bear_spawns");
+    public static final TagKey<Biome> TIGER_SPAWNS = key("tiger_spawns");
     public static final TagKey<Biome> SPIRIT_SPRING_GENERATES = key("spirit_spring_generates");
     private static TagKey<Biome> key(String name) {
         return TagKey.create(Registries.BIOME, Guzhenren.id(name));

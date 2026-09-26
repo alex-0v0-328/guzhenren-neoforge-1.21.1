@@ -5,6 +5,7 @@ import com.unknown.guzhenren.datagen.advancement.ModAdvancementProvider;
 import com.unknown.guzhenren.datagen.block.ModBlockStateProvider;
 import com.unknown.guzhenren.datagen.curios.ModCuriosProvider;
 import com.unknown.guzhenren.datagen.damage.ModDamageTypeTagsProvider;
+import com.unknown.guzhenren.datagen.entity.ModEntityTypeTagsProvider;
 import com.unknown.guzhenren.datagen.item.ModItemModelProvider;
 import com.unknown.guzhenren.datagen.item.ModItemTagsProvider;
 import com.unknown.guzhenren.datagen.lang.EnUsLanguageProvider;
@@ -70,6 +71,9 @@ public final class DataGenerators {
 
         generator.addProvider(event.includeServer(),
                 new ModItemTagsProvider(packOutput, lookupProvider, existingFileHelper));
+
+        generator.addProvider(event.includeServer(),
+                new ModEntityTypeTagsProvider(packOutput, lookupProvider, existingFileHelper));
 
         generator.addProvider(event.includeServer(),
                 new ModCuriosProvider(packOutput, existingFileHelper, lookupProvider));

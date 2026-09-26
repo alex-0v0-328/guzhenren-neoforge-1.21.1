@@ -6,14 +6,18 @@ import com.unknown.guzhenren.client.hud.ChargeHud;
 import com.unknown.guzhenren.client.hud.NourishHud;
 import com.unknown.guzhenren.client.hud.PlayerStatsHud;
 import com.unknown.guzhenren.client.particle.RingParticle;
+import com.unknown.guzhenren.client.renderer.BearGeoRenderer;
 import com.unknown.guzhenren.client.renderer.BoarGuGeoRenderer;
 import com.unknown.guzhenren.client.renderer.RhinocerosBeetleGuGeoRenderer;
+import com.unknown.guzhenren.client.renderer.TigerGeoRenderer;
 import com.unknown.guzhenren.client.renderer.WildBoarGeoRenderer;
 import com.unknown.guzhenren.client.screen.ApertureStorageScreen;
 import com.unknown.guzhenren.client.screen.PlayerInfoScreen;
 import com.unknown.guzhenren.client.screen.RefinementScreen;
 import com.unknown.guzhenren.entity.BoarGuEntity;
+import com.unknown.guzhenren.entity.BearEntity;
 import com.unknown.guzhenren.entity.RhinocerosBeetleGuEntity;
+import com.unknown.guzhenren.entity.TigerEntity;
 import com.unknown.guzhenren.entity.WildBoarEntity;
 import com.unknown.guzhenren.item.gu.MortalGuItem;
 import com.unknown.guzhenren.network.payload.DashPayload;
@@ -83,6 +87,10 @@ public final class ClientEvents {
             new DefaultedEntityGeoModel<>(Guzhenren.id("rhinoceros_beetle"), false);
     private static final GeoModel<WildBoarEntity> WILD_BOAR_MODEL =
             new DefaultedEntityGeoModel<>(Guzhenren.id("wild_boar"), false);
+    private static final GeoModel<BearEntity> BEAR_MODEL =
+            new DefaultedEntityGeoModel<>(Guzhenren.id("bear"), false);
+    private static final GeoModel<TigerEntity> TIGER_MODEL =
+            new DefaultedEntityGeoModel<>(Guzhenren.id("tiger"), false);
     private static final float DASH_YAW_CROSS = 90.0F;
     private static final float DASH_YAW_DIAGONAL = 45.0F;
     private static boolean previousUp;
@@ -140,6 +148,18 @@ public final class ClientEvents {
                         RhinocerosBeetleGuGeoRenderer.DARK_TEXTURE));
         event.registerEntityRenderer(ModEntityTypes.WILD_BOAR.get(),
                 context -> new WildBoarGeoRenderer(context, WILD_BOAR_MODEL));
+        event.registerEntityRenderer(ModEntityTypes.BROWN_BEAR.get(),
+                context -> new BearGeoRenderer(context, BEAR_MODEL, BearGeoRenderer.BROWN_TEXTURE));
+        event.registerEntityRenderer(ModEntityTypes.ASIAN_BLACK_BEAR.get(),
+                context -> new BearGeoRenderer(context, BEAR_MODEL, BearGeoRenderer.ASIAN_BLACK_TEXTURE));
+        event.registerEntityRenderer(ModEntityTypes.AMERICAN_BLACK_BEAR.get(),
+                context -> new BearGeoRenderer(context, BEAR_MODEL, BearGeoRenderer.AMERICAN_BLACK_TEXTURE));
+        event.registerEntityRenderer(ModEntityTypes.ALBINO_BEAR.get(),
+                context -> new BearGeoRenderer(context, BEAR_MODEL, BearGeoRenderer.ALBINO_TEXTURE));
+        event.registerEntityRenderer(ModEntityTypes.TIGER.get(),
+                context -> new TigerGeoRenderer(context, TIGER_MODEL, TigerGeoRenderer.ORANGE_TEXTURE));
+        event.registerEntityRenderer(ModEntityTypes.WHITE_TIGER.get(),
+                context -> new TigerGeoRenderer(context, TIGER_MODEL, TigerGeoRenderer.WHITE_TEXTURE));
     }
     @SubscribeEvent
     public static void onClientTick(ClientTickEvent.Post event) {
